@@ -60,12 +60,12 @@ lboxes = network.filter_boxes(outs,
                               frame,
                               CONF_THRESHOLD,
                               NMS_THRESHOLD)
-
-for lbox in lboxes:
-    detected_class = CLASSES[lbox['class_id']]
-    score = 100 * lbox['confidence']
-    print('Detected: '
-          + '{} with confidence {:.1f}'.format(detected_class,
-                                              score))
+if lboxes:
+    for lbox in lboxes:
+        detected_class = CLASSES[lbox['class_id']]
+        score = 100 * lbox['confidence']
+        print('Detected: '
+              + '{} with confidence {:.1f}'.format(detected_class,
+                                                   score))
 else:
     print('No boxes detected')
