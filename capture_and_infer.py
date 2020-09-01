@@ -1,7 +1,6 @@
-# grabs a single frame from the picamera runs an object detector on it
+# grabs stills, inferring on each, going as fast as it can
 
 import io
-import time
 import argparse
 import yaml
 
@@ -23,9 +22,10 @@ vision = vision.VisionSystem(configs)
 # Create the in-memory
 stream = io.BytesIO()
 
-with picamera.PiCamera() as camera:
-    camera.start_preview()
-    time.sleep(2)
-    camera.capture(stream, format='jpeg')
+camera = picamera.PiCamera()
 
-vision.infer(stream)
+for _ in camera.capture_continuous(stream, format='jpeg'):
+    stream.truncate()
+    stream.seek(0)
+
+    vision.infer(stream)
