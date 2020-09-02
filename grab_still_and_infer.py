@@ -24,6 +24,7 @@ vision = vision.VisionSystem(configs)
 stream = io.BytesIO()
 
 with picamera.PiCamera() as camera:
+    camera.rotation = configs['CAMERA_ANGLE']
     camera.start_preview()
     time.sleep(2)
     camera.capture(stream, format='jpeg')

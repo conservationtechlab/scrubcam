@@ -24,6 +24,7 @@ stream = io.BytesIO()
 
 camera = picamera.PiCamera()
 camera.rotation = configs['CAMERA_ANGLE']
+camera.start_preview()
 
 for _ in camera.capture_continuous(stream, format='jpeg'):
     stream.truncate()
