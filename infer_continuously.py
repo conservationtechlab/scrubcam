@@ -17,7 +17,8 @@ CONFIG_FILE = args.config
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
-vision = vision.VisionSystem(configs)
+# vision = vision.VisionSystem(configs)
+vision = vision.ImageClassificationSystem(configs)
 
 # Create the in-memory
 stream = io.BytesIO()
@@ -32,3 +33,4 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
     stream.seek(0)
 
     vision.infer(stream)
+    vision.print_report()
