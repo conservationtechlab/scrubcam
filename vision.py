@@ -6,7 +6,38 @@ import cv2
 from dnntools import neuralnetwork_coral as nn
 
 
-class VisionSystem():
+class ImageClassificationSystem():
+
+    def __init__(self, configs):
+        # CV constants
+        # self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
+
+        MODEL_PATH = configs['MODEL_PATH']
+        MODEL = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
+        CLASSES_FILE = os.path.join(MODEL_PATH, configs['CLASS_NAMES_FILE'])
+        self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
+
+        # prepare neural network
+        self.network = nn.ImageClassifierHandler(MODEL)
+
+    def infer(self, stream):
+        # Construct a numpy array from the stream
+        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+        # "Decode" the image from the array, preserving color
+        frame = cv2.imdecode(data, 1)
+
+        self.result, inference_time = self.network.infer(frame)
+
+    def print_report(self):
+        if len(self.result) > 0:
+            label = self.CLASSES[self.result[0][0]]
+            score = self.result[0][1]
+            print('Top 1 label is {} with score: {}'.format(label, score))
+        else:
+            print('Inference resulted in no class label.')
+            
+
+class ObjectDetectionSystem():
 
     def __init__(self, configs):
         # CV constants
@@ -36,12 +67,14 @@ class VisionSystem():
 
         outs, inference_time = self.network.infer(frame)
 
-        labeled_boxes = self.network.filter_boxes(outs,
-                                                  frame,
-                                                  self.CONF_THRESHOLD,
-                                                  self.NMS_THRESHOLD)
-        if labeled_boxes:
-            for box in labeled_boxes:
+        self.labeled_boxes = self.network.filter_boxes(outs,
+                                                       frame,
+                                                       self.CONF_THRESHOLD,
+                                                       self.NMS_THRESHOLD)
+
+    def print_report(self):
+        if self.labeled_boxes:
+            for box in self.labeled_boxes:
                 detected_class = self.CLASSES[box['class_id']]
                 score = 100 * box['confidence']
                 print('Detected: '
