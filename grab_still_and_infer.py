@@ -25,8 +25,11 @@ stream = io.BytesIO()
 
 with picamera.PiCamera() as camera:
     camera.rotation = configs['CAMERA_ANGLE']
-    camera.start_preview()
-    time.sleep(2)
+    if configs['PREVIEW_ON']:
+        camera.start_preview()
+        time.sleep(2)
+    else:
+        time.sleep(.1)
     camera.capture(stream, format='jpeg')
 
 vision.infer(stream)
