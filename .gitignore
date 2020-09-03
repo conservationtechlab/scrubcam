@@ -1,3 +1,5 @@
+*.jpeg
+*.jpg
 *~
 *.yaml
 __pycache__
