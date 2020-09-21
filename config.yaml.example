@@ -1,5 +1,5 @@
-# RECORD_FOLDER: /home/ian/project/scrubcam/recordings
-# RECORD: False
+RECORD_FOLDER: /home/ian/projects/scrubcam/recordings
+RECORD: False
 # HEADLESS: False
 
 # AI CONFIGURATIONS
@@ -7,7 +7,7 @@
 # bird, person, giraffe, cup, cat, dog, horse, sheep, cow, elephant, bear, zebra
 # TRACKED_CLASS: [giraffe, person]
 
-CONF_THRESHOLD: .5
+CONF_THRESHOLD: .1
 NMS_THRESHOLD: .9
 INPUT_WIDTH: 416
 INPUT_HEIGHT: 416

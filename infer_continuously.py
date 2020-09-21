@@ -17,10 +17,10 @@ CONFIG_FILE = args.config
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
-# vision = vision.VisionSystem(configs)
-vision = vision.ImageClassificationSystem(configs)
+RECORD = configs['RECORD']
+    
+classifier = vision.ImageClassificationSystem(configs)
 
-# Create the in-memory
 stream = io.BytesIO()
 
 camera = picamera.PiCamera()
@@ -32,5 +32,8 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
     stream.truncate()
     stream.seek(0)
 
-    vision.infer(stream)
-    vision.print_report()
+    classifier.infer(stream)
+    classifier.print_report()
+
+    if RECORD:
+        classifier.save_image_of_anything_but('background')

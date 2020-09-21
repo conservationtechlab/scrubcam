@@ -17,6 +17,7 @@ class ImageClassificationSystem():
         MODEL_PATH = configs['MODEL_PATH']
         MODEL = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
         CLASSES_FILE = os.path.join(MODEL_PATH, configs['CLASS_NAMES_FILE'])
+        self.RECORD_FOLDER = configs['RECORD_FOLDER']
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
 
         # prepare neural network
@@ -54,12 +55,14 @@ class ImageClassificationSystem():
                 label = '_'.join(label.split(' '))
                 print(label)
                 now = datetime.now()
-                timestamp = now.strftime("%Y-%m-%dT%H-%M-%S.%f")[:-3]
+                timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
                 filename = '{}_{}.jpeg'.format(timestamp, label)
                 self.recorded_image_count += 1
-                print('Saving image.')
-                cv2.imwrite(filename, self.frame)
-            
+                full_filename = os.path.join(self.RECORD_FOLDER, filename)
+                print('[INFO] Saving image to {}'.format(full_filename))
+                ok = cv2.imwrite(full_filename, self.frame)
+                if not ok:
+                    print('[WARNING]: did not succeed in image saving.')
 
 class ObjectDetectionSystem():
 
