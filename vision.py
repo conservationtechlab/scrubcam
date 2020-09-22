@@ -7,31 +7,40 @@ import cv2
 
 from dnntools import neuralnetwork_coral as nn
 
-
-class ImageClassificationSystem():
-
+class InferenceSystem():
     def __init__(self, configs):
         # CV constants
         self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
 
         MODEL_PATH = configs['MODEL_PATH']
-        MODEL = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
+        self.MODEL = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
         CLASSES_FILE = os.path.join(MODEL_PATH, configs['CLASS_NAMES_FILE'])
         self.RECORD_FOLDER = configs['RECORD_FOLDER']
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
 
-        # prepare neural network
-        self.network = nn.ImageClassifierHandler(MODEL)
-
         self.recorded_image_count = 0
 
+        self.frame = None
+        
+    def infer_on_frame(self, frame):
+        self.frame = frame
+        self.result, inference_time = self.network.infer(self.frame)
+        
     def infer(self, stream):
         # Construct a numpy array from the stream
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
         # "Decode" the image from the array, preserving color
         self.frame = cv2.imdecode(data, 1)
 
-        self.result, inference_time = self.network.infer(self.frame)
+        self.infer_on_frame(self, self.frame)
+
+class ImageClassificationSystem(InferenceSystem):
+
+    def __init__(self, configs):
+        super().__init__(configs)
+
+        # prepare neural network
+        self.network = nn.ImageClassifierHandler(self.MODEL)
 
     def _extract_label_and_score(self):
         label = self.CLASSES[self.result[0][0]]
@@ -64,6 +73,7 @@ class ImageClassificationSystem():
                 if not ok:
                     print('[WARNING]: did not succeed in image saving.')
 
+
 class ObjectDetectionSystem():
 
     def __init__(self, configs):
@@ -75,11 +85,13 @@ class ObjectDetectionSystem():
         INPUT_HEIGHT = configs['INPUT_HEIGHT']
 
         MODEL_PATH = configs['MODEL_PATH']
-        MODEL_CONFIG = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
+        MODEL_CONFIG = os.path.join(MODEL_PATH, configs['OBJ_MODEL_CONFIG_FILE'])
         MODEL_WEIGHTS = os.path.join(MODEL_PATH, configs['MODEL_WEIGHTS_FILE'])
-        CLASSES_FILE = os.path.join(MODEL_PATH, configs['CLASS_NAMES_FILE'])
+        CLASSES_FILE = os.path.join(MODEL_PATH, configs['OBJ_CLASS_NAMES_FILE'])
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
 
+        self.frame = None
+        
         # prepare neural network
         self.network = nn.ObjectDetectorHandler(MODEL_CONFIG,
                                                 MODEL_WEIGHTS,
@@ -90,12 +102,12 @@ class ObjectDetectionSystem():
         # Construct a numpy array from the stream
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
         # "Decode" the image from the array, preserving color
-        frame = cv2.imdecode(data, 1)
+        self.frame = cv2.imdecode(data, 1)
 
-        outs, inference_time = self.network.infer(frame)
+        outs, inference_time = self.network.infer(self.frame)
 
         self.labeled_boxes = self.network.filter_boxes(outs,
-                                                       frame,
+                                                       self.frame,
                                                        self.CONF_THRESHOLD,
                                                        self.NMS_THRESHOLD)
 
@@ -109,3 +121,7 @@ class ObjectDetectionSystem():
                                                            score))
         else:
             print('No boxes detected')
+
+    def top_box(self):
+        if self.labeled_boxes:
+            return self.labeled_boxes[0]['box']
