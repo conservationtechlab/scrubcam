@@ -51,7 +51,8 @@ class ImageClassificationSystem(InferenceSystem):
     def print_report(self):
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
-            print('Top 1 label is {} with score: {}'.format(label, score))
+            print('***{}*** is classification (Top 1) with score: {}'.format(label,
+                                                                             score))
         else:
             print('Inference resulted in no class label.')
 
@@ -111,16 +112,25 @@ class ObjectDetectionSystem():
                                                        self.CONF_THRESHOLD,
                                                        self.NMS_THRESHOLD)
 
-    def print_report(self):
+    def class_of_box(self, box):
+        return self.CLASSES[box['class_id']]
+        
+    def print_report(self, max_boxes=None):
         if self.labeled_boxes:
-            for box in self.labeled_boxes:
-                detected_class = self.CLASSES[box['class_id']]
+            if max_boxes is None:
+                max_boxes = len(self.labeled_boxes)
+            for i, box in enumerate(self.labeled_boxes[:max_boxes]):
+                detected_class = self.class_of_box(box)
                 score = 100 * box['confidence']
-                print('Detected: '
-                      + '{} with confidence {:.1f}'.format(detected_class,
-                                                           score))
+                print('{} ***{}*** detected. With confidence {:.1f}'.format(i,
+                                                                            detected_class,
+                                                                            score))
         else:
             print('No boxes detected')
+
+    def top_class(self):
+        if self.labeled_boxes:
+            return self.class_of_box(self.labeled_boxes[0])
 
     def top_box(self):
         if self.labeled_boxes:
