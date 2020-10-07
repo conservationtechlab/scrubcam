@@ -38,7 +38,7 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
     detector.print_report(5)
     for box in detector.labeled_boxes:
         # if detector.top_class() == FILTER_CLASS:
-        if detector.class_of_box(box) == FILTER_CLASS:
+        if detector.class_of_box(box) in FILTER_CLASS:
             # x, y, w, h = detector.top_box()
             x, y, w, h = box['box']
             
