@@ -1,3 +1,4 @@
+import argparse
 import time
 from threading import Thread
 
@@ -6,6 +7,12 @@ from picamera import PiCamera
 
 ZOOM_BUTTON = 23
 BACKLIGHT_PIN = 18
+
+parser = argparse.ArgumentParser()
+parser.add_argument('zoom_factor',
+                    help='Factor to zoom in by')
+args = parser.parse_args()
+ZOOM_FACTOR = args.zoom_factor
 
 
 class MainApp(Thread):
@@ -37,7 +44,7 @@ class MainApp(Thread):
     def _handle_buttons(self):
         if not GPIO.input(ZOOM_BUTTON):
             width, height = self.camera.resolution
-            zoom_factor = .1
+            zoom_factor = 1/float(ZOOM_FACTOR)
             left = 0.5 - zoom_factor/2.
             top = 0.5 - zoom_factor/2.
             self.camera.zoom = (left, top, zoom_factor, zoom_factor)
