@@ -8,7 +8,7 @@ GPIO-connected buttons) attached.
 
 import os
 import time
-import subprocess
+import argparse
 
 import yaml
 
@@ -21,15 +21,23 @@ from datetime import datetime
 import RPi.GPIO as GPIO
 from picamera import PiCamera
 
-CONFIG_FILE = '/home/pi/projects/dencam/config.yaml'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('config_file',
+                    help='Configuration file')
+args = parser.parse_args()
+
+CONFIG_FILE = args.config_file
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 VIDEO_PATH = configs['VIDEO_PATH']
 RECORD_LENGTH = configs['RECORD_LENGTH']
 PAUSE_BEFORE_RECORD = configs['PAUSE_BEFORE_RECORD']
-OFF_BUTTON_DELAY = configs['OFF_BUTTON_DELAY']
+
+DISPLAY_RESOLUTION = configs['DISPLAY_RESOLUTION']
+# OFF_BUTTON_DELAY = configs['OFF_BUTTON_DELAY']
 CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
-CAMERA_ROTATION = configs['CAMERA_ROTATION']
+CAMERA_ANGLE = configs['CAMERA_ANGLE']
 VIDEO_QUALITY = configs['VIDEO_QUALITY']
 FRAME_RATE = configs['FRAME_RATE']
 
@@ -37,7 +45,7 @@ FRAME_RATE = configs['FRAME_RATE']
 SCREEN_BUTTON = 27
 PREVIEW_BUTTON = 23
 RECORD_BUTTON = 22
-OFF_BUTTON = 17
+ZOOM_BUTTON = 17
 
 
 class DenCamApp(Thread):
@@ -46,9 +54,10 @@ class DenCamApp(Thread):
 
         # camera setup
         self.camera = PiCamera(framerate=FRAME_RATE)
-        self.camera.rotation = CAMERA_ROTATION
+        self.camera.rotation = CAMERA_ANGLE
         self.camera.resolution = CAMERA_RESOLUTION
         self.preview_on = False
+        self.zoom_on = False
         # recording setup
         self.recording = False
         self.record_start_time = time.time()  # also used in initial countdown
@@ -128,14 +137,15 @@ class DenCamApp(Thread):
         self.latch_screen_button = False
         self.latch_record_button = False
         self.latch_preview_button = False
+        self.latch_zoom_button = False
 
         GPIO.setmode(GPIO.BCM)
 
         # button pins
         GPIO.setup(SCREEN_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(RECORD_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(OFF_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(PREVIEW_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(ZOOM_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         # screen backlight control pin and related
         GPIO.setup(18, GPIO.OUT)
@@ -173,13 +183,21 @@ class DenCamApp(Thread):
         else:
             self.latch_record_button = False
 
-        if not GPIO.input(OFF_BUTTON):
-            button_pressed_time = time.time() - self.off_button_start
-            if button_pressed_time > OFF_BUTTON_DELAY:
-                self.backlight_pwm.ChangeDutyCycle(0)
-                subprocess.call("sudo shutdown now", shell=True)
+        if not GPIO.input(ZOOM_BUTTON):
+            if not self.latch_zoom_button:
+                if not self.zoom_on:
+                    width, height = self.camera.resolution
+                    # zoom_factor = 1/float(ZOOM_FACTOR)
+                    zoom_factor = DISPLAY_RESOLUTION[0]/width
+                    left = 0.5 - zoom_factor/2.
+                    top = 0.5 - zoom_factor/2.
+                    self.camera.zoom = (left, top, zoom_factor, zoom_factor)
+                else:
+                    self.camera.zoom = (0, 0, 1.0, 1.0)
+                self.zoom_on = not self.zoom_on
+                self.latch_zoom_button = True
         else:
-            self.off_button_start = time.time()
+            self.latch_zoom_button = False
 
         if not GPIO.input(PREVIEW_BUTTON):
             if not self.latch_preview_button:
