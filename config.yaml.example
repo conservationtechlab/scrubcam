@@ -1,12 +1,26 @@
-RECORD_FOLDER: /home/ian/projects/scrubcam/recordings
+# RECORDING CONFIGURATION
+VIDEO_PATH: /media/pi/DENDATA
 RECORD: False
+# length of videos to record in seconds
+RECORD_LENGTH: 300  # 60 * 5 = 300 for 5 minutes
+# num seconds after program starts to begin video recording
+PAUSE_BEFORE_RECORD: 5  # 90 for current spec
+
+# CAMERA CONFIGURATIONS
+CAMERA_RESOLUTION: [1920, 1080]
+VIDEO_QUALITY: 20  # between 1 and 40, 1 is highest, 40 lowest
+FRAME_RATE: 25
+CAMERA_ANGLE: 90
+PREVIEW_ON: true
+
+# SCREEN CONFIGURATIONS
+DISPLAY_RESOLUTION: [640, 480]
+
 # HEADLESS: False
 
 # AI CONFIGURATIONS
-
 # bird, person, giraffe, cup, cat, dog, horse, sheep, cow, elephant, bear, zebra
 # TRACKED_CLASS: [giraffe, person]
-
 FILTER_CLASS: bird
 
 CONF_THRESHOLD: .1
@@ -25,6 +39,4 @@ CLASS_NAMES_FILE: inat_bird_labels.txt
 # MODEL_CONFIG_FILE: mobilenet_v2_1.0_224_quant_edgetpu.tflite
 # CLASS_NAMES_FILE: imagenet_labels.txt
 
-# CAMERA CONFIGURATIONS
-CAMERA_ANGLE: 180
-PREVIEW_ON: true
+
