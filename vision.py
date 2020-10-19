@@ -116,17 +116,20 @@ class ObjectDetectionSystem():
         return self.CLASSES[box['class_id']]
         
     def print_report(self, max_boxes=None):
+        now = datetime.now()
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         if self.labeled_boxes:
             if max_boxes is None:
                 max_boxes = len(self.labeled_boxes)
             for i, box in enumerate(self.labeled_boxes[:max_boxes]):
                 detected_class = self.class_of_box(box)
                 score = 100 * box['confidence']
-                print('{} ***{}*** detected. With confidence {:.1f}'.format(i,
-                                                                            detected_class,
-                                                                            score))
+                print('{}: {} ***{}*** detected. With confidence {:.1f}'.format(timestamp,
+                                                                                i,
+                                                                                detected_class,
+                                                                                score))
         else:
-            print('No boxes detected')
+            print('{}: No boxes detected'.format(timestamp))
 
     def top_class(self):
         if self.labeled_boxes:
