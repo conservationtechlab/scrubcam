@@ -15,7 +15,7 @@ class InferenceSystem():
         MODEL_PATH = configs['MODEL_PATH']
         self.MODEL = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
         CLASSES_FILE = os.path.join(MODEL_PATH, configs['CLASS_NAMES_FILE'])
-        self.RECORD_FOLDER = configs['RECORD_FOLDER']
+        self.VIDEO_PATH = configs['VIDEO_PATH']
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
 
         self.recorded_image_count = 0
@@ -68,7 +68,7 @@ class ImageClassificationSystem(InferenceSystem):
                 timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
                 filename = '{}_{}.jpeg'.format(timestamp, label)
                 self.recorded_image_count += 1
-                full_filename = os.path.join(self.RECORD_FOLDER, filename)
+                full_filename = os.path.join(self.VIDEO_PATH, filename)
                 print('[INFO] Saving image to {}'.format(full_filename))
                 ok = cv2.imwrite(full_filename, self.frame)
                 if not ok:
