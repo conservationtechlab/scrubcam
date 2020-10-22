@@ -7,6 +7,7 @@ import cv2
 
 from dnntools import neuralnetwork_coral as nn
 
+
 class InferenceSystem():
     def __init__(self, configs):
         # CV constants
@@ -21,11 +22,11 @@ class InferenceSystem():
         self.recorded_image_count = 0
 
         self.frame = None
-        
+
     def infer_on_frame(self, frame):
         self.frame = frame
         self.result, inference_time = self.network.infer(self.frame)
-        
+
     def infer(self, stream):
         # Construct a numpy array from the stream
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
@@ -33,6 +34,7 @@ class InferenceSystem():
         self.frame = cv2.imdecode(data, 1)
 
         self.infer_on_frame(self, self.frame)
+
 
 class ImageClassificationSystem(InferenceSystem):
 
@@ -47,7 +49,7 @@ class ImageClassificationSystem(InferenceSystem):
         score = self.result[0][1]
 
         return label, score
-        
+
     def print_report(self):
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
@@ -86,13 +88,16 @@ class ObjectDetectionSystem():
         INPUT_HEIGHT = configs['INPUT_HEIGHT']
 
         MODEL_PATH = configs['MODEL_PATH']
-        MODEL_CONFIG = os.path.join(MODEL_PATH, configs['OBJ_MODEL_CONFIG_FILE'])
-        MODEL_WEIGHTS = os.path.join(MODEL_PATH, configs['MODEL_WEIGHTS_FILE'])
-        CLASSES_FILE = os.path.join(MODEL_PATH, configs['OBJ_CLASS_NAMES_FILE'])
+        MODEL_CONFIG = os.path.join(MODEL_PATH,
+                                    configs['OBJ_MODEL_CONFIG_FILE'])
+        MODEL_WEIGHTS = os.path.join(MODEL_PATH,
+                                     configs['MODEL_WEIGHTS_FILE'])
+        CLASSES_FILE = os.path.join(MODEL_PATH,
+                                    configs['OBJ_CLASS_NAMES_FILE'])
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
 
         self.frame = None
-        
+
         # prepare neural network
         self.network = nn.ObjectDetectorHandler(MODEL_CONFIG,
                                                 MODEL_WEIGHTS,
@@ -114,7 +119,7 @@ class ObjectDetectionSystem():
 
     def class_of_box(self, box):
         return self.CLASSES[box['class_id']]
-        
+
     def print_report(self, max_boxes=None):
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -138,3 +143,6 @@ class ObjectDetectionSystem():
     def top_box(self):
         if self.labeled_boxes:
             return self.labeled_boxes[0]['box']
+
+    # def coords_of_top_box(self):
+    #     return self.labeled_boxes[0][
