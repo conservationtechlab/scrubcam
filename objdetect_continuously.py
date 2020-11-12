@@ -3,7 +3,7 @@ import argparse
 import yaml
 
 import picamera
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 import vision
 
@@ -59,6 +59,7 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
 
     lboxes = detector.labeled_boxes
     if len(lboxes) > 0:
+
         camera.remove_overlay(overlay)
         overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
 
@@ -70,7 +71,13 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
             draw.rectangle([(left, top), (left + width, top + height)],
                            outline=(255, 0, 0),
                            width=30)
-
+            font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
+            the_font = ImageFont.truetype(font_path, 120)
+            draw.text((left, top),
+                      detector.class_of_box(lbox),
+                      font=the_font,
+                      fill=(255, 255, 255))
+            
         pad = Image.new('RGBA',
                         (((overlay_img.size[0] + 31) // 32) * 32,
                          ((overlay_img.size[1] + 15) // 16) * 16,
