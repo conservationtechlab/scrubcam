@@ -22,32 +22,33 @@ detector = vision.ObjectDetectionSystem(configs)
 
 stream = io.BytesIO()
 
-resolution = (1280, 720)
+# resolution = (1280, 720)
 
 camera = picamera.PiCamera()
 camera.rotation = configs['CAMERA_ANGLE']
-camera.resolution = resolution
+# camera.resolution = resolution
+resolution = camera.resolution
 
 if configs['PREVIEW_ON']:
     camera.start_preview()
 
-    overlay = Image.new('RGBA', resolution, (0, 0, 0, 0))
+    overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
 
-    draw = ImageDraw.Draw(overlay)
+    draw = ImageDraw.Draw(overlay_img)
     draw.rectangle([(100, 100), (200, 200)],
                    outline=(255, 0, 0),
                    width=3)
 
     pad = Image.new('RGBA',
-                    (((overlay.size[0] + 31) // 32) * 32,
-                     ((overlay.size[1] + 15) // 16) * 16,
+                    (((overlay_img.size[0] + 31) // 32) * 32,
+                     ((overlay_img.size[1] + 15) // 16) * 16,
                     ))
 
-    pad.paste(overlay, (0, 0))
+    pad.paste(overlay_img, (0, 0))
 
-    o = camera.add_overlay(pad.tobytes(), size=overlay.size)
-    o.alpha = 128
-    o.layer = 3
+    overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
+    overlay.alpha = 128
+    overlay.layer = 3
 
 for _ in camera.capture_continuous(stream, format='jpeg'):
     stream.truncate()
@@ -58,10 +59,10 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
 
     lboxes = detector.labeled_boxes
     if len(lboxes) > 0:
-        camera.remove_overlay(o)
-        overlay = Image.new('RGBA', resolution, (0, 0, 0, 0))
+        camera.remove_overlay(overlay)
+        overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
 
-        draw = ImageDraw.Draw(overlay)
+        draw = ImageDraw.Draw(overlay_img)
 
         for lbox in lboxes:
             left, top, width, height = lbox['box']
@@ -71,12 +72,12 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
                            width=30)
 
         pad = Image.new('RGBA',
-                        (((overlay.size[0] + 31) // 32) * 32,
-                         ((overlay.size[1] + 15) // 16) * 16,
+                        (((overlay_img.size[0] + 31) // 32) * 32,
+                         ((overlay_img.size[1] + 15) // 16) * 16,
                         ))
 
-        pad.paste(overlay, (0, 0))
+        pad.paste(overlay_img, (0, 0))
 
-        o = camera.add_overlay(pad.tobytes(), size=overlay.size)
-        o.alpha = 128
-        o.layer = 3
+        overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
+        overlay.alpha = 128
+        overlay.layer = 3
