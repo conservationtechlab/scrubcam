@@ -1,5 +1,5 @@
 # RECORDING CONFIGURATION
-VIDEO_PATH: /media/pi/DENDATA
+RECORD_FOLDER: /home/user/recordings
 RECORD: False
 # length of videos to record in seconds
 RECORD_LENGTH: 300  # 60 * 5 = 300 for 5 minutes
