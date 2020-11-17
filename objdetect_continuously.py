@@ -70,8 +70,6 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
                 f.write('{} : {}\n'.format(str(datetime.now()),
                                            top_class))
 
-
-
         camera.remove_overlay(overlay)
         overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay_img)
@@ -84,12 +82,13 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
                            width=10)
             font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
             the_font = ImageFont.truetype(font_path, 50)
-            text = '{}:{:.1f}'.format(detector.class_of_box(lbox), 100 * lbox['confidence'])
+            text = '{}:{:.1f}'.format(detector.class_of_box(lbox),
+                                      100 * lbox['confidence'])
             draw.text((left + 10, top + 10),
                       text,
                       font=the_font,
                       fill=(255, 0, 0))
-            
+
         pad = Image.new('RGBA',
                         (((overlay_img.size[0] + 31) // 32) * 32,
                          ((overlay_img.size[1] + 15) // 16) * 16,
