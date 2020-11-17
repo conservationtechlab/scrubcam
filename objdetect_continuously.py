@@ -66,8 +66,9 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
         if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
             top_class = detector.class_of_box(lboxes[0])
             detector.save_current_frame(top_class)
-            with open('seen.log', 'a') as f:
-                f.write('{} : {}\n'.format(str(datetime.now()),
+            with open('what_was_seen.log', 'a+') as f:
+                tstamp = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                f.write('{} | {}\n'.format(tstamp,
                                            top_class))
 
         camera.remove_overlay(overlay)
