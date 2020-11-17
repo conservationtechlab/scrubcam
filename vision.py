@@ -12,20 +12,11 @@ class InferenceSystem():
     def __init__(self, configs):
         # CV constants
         self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
-
-        MODEL_PATH = configs['MODEL_PATH']
-        self.MODEL = os.path.join(MODEL_PATH, configs['MODEL_CONFIG_FILE'])
-        CLASSES_FILE = os.path.join(MODEL_PATH, configs['CLASS_NAMES_FILE'])
-        self.VIDEO_PATH = configs['VIDEO_PATH']
-        self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
-
+        self.MODEL_PATH = configs['MODEL_PATH']
+        self.MODEL_WEIGHTS = 'N/A' # not applicable
+        self.RECORD_FOLDER = configs['RECORD_FOLDER']
         self.recorded_image_count = 0
-
         self.frame = None
-
-    def infer_on_frame(self, frame):
-        self.frame = frame
-        self.result, inference_time = self.network.infer(self.frame)
 
     def infer(self, stream):
         # Construct a numpy array from the stream
@@ -33,16 +24,31 @@ class InferenceSystem():
         # "Decode" the image from the array, preserving color
         self.frame = cv2.imdecode(data, 1)
 
-        self.infer_on_frame(self, self.frame)
+    def save_current_frame(self, label):
+        now = datetime.now()
+        timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
+        filename = '{}_{}.jpeg'.format(timestamp, label)
+        self.recorded_image_count += 1
+        full_filename = os.path.join(self.RECORD_FOLDER, filename)
+        print('[INFO] Saving image to {}'.format(full_filename))
+        ok = cv2.imwrite(full_filename, self.frame)
+        if not ok:
+            print('[WARNING]: did not succeed in image saving.')
 
 
 class ImageClassificationSystem(InferenceSystem):
 
     def __init__(self, configs):
         super().__init__(configs)
-
+        self.MODEL = os.path.join(self.MODEL_PATH, configs['MODEL_CONFIG_FILE'])
+        CLASSES_FILE = os.path.join(self.MODEL_PATH, configs['CLASS_NAMES_FILE'])
+        self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
         # prepare neural network
         self.network = nn.ImageClassifierHandler(self.MODEL)
+
+    def infer(self, stream):
+        super().infer(stream)
+        self.result, inference_time = self.network.infer(self.frame)
 
     def _extract_label_and_score(self):
         label = self.CLASSES[self.result[0][0]]
@@ -66,59 +72,40 @@ class ImageClassificationSystem(InferenceSystem):
                 label = re.sub('[()]', '', label)
                 label = '_'.join(label.split(' '))
                 print(label)
-                now = datetime.now()
-                timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
-                filename = '{}_{}.jpeg'.format(timestamp, label)
-                self.recorded_image_count += 1
-                full_filename = os.path.join(self.VIDEO_PATH, filename)
-                print('[INFO] Saving image to {}'.format(full_filename))
-                ok = cv2.imwrite(full_filename, self.frame)
-                if not ok:
-                    print('[WARNING]: did not succeed in image saving.')
+                self.save_current_frame(label)
 
 
-class ObjectDetectionSystem():
+class ObjectDetectionSystem(InferenceSystem):
 
     def __init__(self, configs):
+        super().__init__(configs)
         # CV constants
         # TRACKED_CLASS = configs['TRACKED_CLASS']
-        self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
-        self.NMS_THRESHOLD = configs['NMS_THRESHOLD']
         INPUT_WIDTH = configs['INPUT_WIDTH']
         INPUT_HEIGHT = configs['INPUT_HEIGHT']
-
-        MODEL_PATH = configs['MODEL_PATH']
-        MODEL_CONFIG = os.path.join(MODEL_PATH,
+        MODEL_CONFIG = os.path.join(self.MODEL_PATH,
                                     configs['OBJ_MODEL_CONFIG_FILE'])
-        MODEL_WEIGHTS = os.path.join(MODEL_PATH,
-                                     configs['MODEL_WEIGHTS_FILE'])
-        CLASSES_FILE = os.path.join(MODEL_PATH,
+        OBJ_CLASSES_FILE = os.path.join(self.MODEL_PATH,
                                     configs['OBJ_CLASS_NAMES_FILE'])
-        self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
+        self.OBJ_CLASSES = nn.read_classes_from_file(OBJ_CLASSES_FILE)
 
-        self.frame = None
-
+        self.NMS_THRESHOLD = configs['NMS_THRESHOLD']
         # prepare neural network
         self.network = nn.ObjectDetectorHandler(MODEL_CONFIG,
-                                                MODEL_WEIGHTS,
+                                                self.MODEL_WEIGHTS,
                                                 INPUT_WIDTH,
                                                 INPUT_HEIGHT)
 
     def infer(self, stream):
-        # Construct a numpy array from the stream
-        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-        # "Decode" the image from the array, preserving color
-        self.frame = cv2.imdecode(data, 1)
-
+        super().infer(stream)
         outs, inference_time = self.network.infer(self.frame)
-
         self.labeled_boxes = self.network.filter_boxes(outs,
                                                        self.frame,
                                                        self.CONF_THRESHOLD,
                                                        self.NMS_THRESHOLD)
 
     def class_of_box(self, box):
-        return self.CLASSES[box['class_id']]
+        return self.OBJ_CLASSES[box['class_id']]
 
     def print_report(self, max_boxes=None):
         now = datetime.now()
