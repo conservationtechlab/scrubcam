@@ -24,16 +24,14 @@ DISPLAY_RESOLUTION: [640, 480]
 FILTER_CLASS: bird
 
 CONF_THRESHOLD: .1
+RECORD_CONF_THRESHOLD: .6
 NMS_THRESHOLD: .9
 INPUT_WIDTH: 416
 INPUT_HEIGHT: 416
 
 MODEL_PATH: /usr/share/edgetpu/examples/models/
-
 OBJ_MODEL_CONFIG_FILE: ssd_mobilenet_v1_coco_quant_postprocess_edgetpu.tflite
-MODEL_WEIGHTS_FILE: N/A
 OBJ_CLASS_NAMES_FILE: coco_labels.txt
-
 MODEL_CONFIG_FILE: mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite
 CLASS_NAMES_FILE: inat_bird_labels.txt
 # MODEL_CONFIG_FILE: mobilenet_v2_1.0_224_quant_edgetpu.tflite
