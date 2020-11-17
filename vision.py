@@ -18,11 +18,15 @@ class InferenceSystem():
         self.recorded_image_count = 0
         self.frame = None
 
+    def infer_on_frame(self, frame):
+        raise NotImplementedError
+        
     def infer(self, stream):
         # Construct a numpy array from the stream
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
         # "Decode" the image from the array, preserving color
         self.frame = cv2.imdecode(data, 1)
+        self.infer_on_frame(self.frame)
 
     def save_current_frame(self, label):
         now = datetime.now()
@@ -46,9 +50,8 @@ class ImageClassificationSystem(InferenceSystem):
         # prepare neural network
         self.network = nn.ImageClassifierHandler(self.MODEL)
 
-    def infer(self, stream):
-        super().infer(stream)
-        self.result, inference_time = self.network.infer(self.frame)
+    def infer_on_frame(self, frame):
+        self.result, inference_time = self.network.infer(frame)
 
     def _extract_label_and_score(self):
         label = self.CLASSES[self.result[0][0]]
@@ -96,11 +99,10 @@ class ObjectDetectionSystem(InferenceSystem):
                                                 INPUT_WIDTH,
                                                 INPUT_HEIGHT)
 
-    def infer(self, stream):
-        super().infer(stream)
-        outs, inference_time = self.network.infer(self.frame)
+    def infer_on_frame(self, frame):
+        outs, inference_time = self.network.infer(frame)
         self.labeled_boxes = self.network.filter_boxes(outs,
-                                                       self.frame,
+                                                       frame,
                                                        self.CONF_THRESHOLD,
                                                        self.NMS_THRESHOLD)
 
