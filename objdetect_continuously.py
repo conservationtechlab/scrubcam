@@ -2,6 +2,7 @@ import io
 import argparse
 import yaml
 
+from datetime import datetime
 import picamera
 from PIL import Image, ImageDraw, ImageFont
 
@@ -17,17 +18,19 @@ with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
 RECORD = configs['RECORD']
+RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 
 detector = vision.ObjectDetectionSystem(configs)
 
 stream = io.BytesIO()
 
-# resolution = (1280, 720)
+resolution = (1280, 720)
 
 camera = picamera.PiCamera()
 camera.rotation = configs['CAMERA_ANGLE']
-# camera.resolution = resolution
-resolution = camera.resolution
+camera.resolution = resolution
+# resolution = camera.resolution
+
 
 if configs['PREVIEW_ON']:
     camera.start_preview()
@@ -60,9 +63,17 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
     lboxes = detector.labeled_boxes
     if len(lboxes) > 0:
 
+        if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
+            top_class = detector.class_of_box(lboxes[0])
+            detector.save_current_frame(top_class)
+            with open('seen.log', 'a') as f:
+                f.write('{} : {}\n'.format(str(datetime.now()),
+                                           top_class))
+
+
+
         camera.remove_overlay(overlay)
         overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
-
         draw = ImageDraw.Draw(overlay_img)
 
         for lbox in lboxes:
