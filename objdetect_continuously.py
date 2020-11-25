@@ -54,8 +54,6 @@ if configs['PREVIEW_ON']:
     overlay.layer = 3
 
 for _ in camera.capture_continuous(stream, format='jpeg'):
-    stream.truncate()
-    stream.seek(0)
 
     detector.infer(stream)
     detector.print_report()
@@ -100,3 +98,7 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
         overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
         overlay.alpha = 128
         overlay.layer = 3
+
+    # reset the stream for the next capture
+    stream.seek(0)
+    stream.truncate()

@@ -22,6 +22,8 @@ class InferenceSystem():
         raise NotImplementedError
         
     def infer(self, stream):
+        # may not be necessary since using .getvalue()
+        stream.seek(0)
         # Construct a numpy array from the stream
         data = np.fromstring(stream.getvalue(), dtype=np.uint8)
         # "Decode" the image from the array, preserving color
