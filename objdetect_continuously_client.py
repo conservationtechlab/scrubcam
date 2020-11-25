@@ -83,10 +83,11 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
 
     lboxes = detector.labeled_boxes
     if len(lboxes) > 0:
-        # send image over socket
-        socket_handler.send_image(stream)
 
         if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
+            # send image over socket
+            socket_handler.send_image(stream)
+
             top_class = detector.class_of_box(lboxes[0])
             detector.save_current_frame(top_class)
             with open('what_was_seen.log', 'a+') as f:
