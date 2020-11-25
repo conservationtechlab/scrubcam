@@ -14,7 +14,7 @@ import vision
 class SocketHandler():
 
     def __init__(self, ip, port):
-        self.sock = socket.socket()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((ip, port))
         self.connection = self.sock.makefile('wb')
 
