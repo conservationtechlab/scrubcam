@@ -6,7 +6,7 @@ import time
 import numpy as np
 import cv2
 
-server_socket = socket.socket()
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind(('192.168.1.66', 65432))
 server_socket.listen()
 
