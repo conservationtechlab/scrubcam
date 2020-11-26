@@ -42,23 +42,23 @@ with open(CONFIG_FILE) as f:
 
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
+REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
+CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
+CAMERA_ANGLE = configs['CAMERA_ANGLE']
 
 detector = vision.ObjectDetectionSystem(configs)
-
-socket_handler = SocketHandler('192.168.1.66', 65432)
+socket_handler = SocketHandler(REMOTE_SERVER_IP, 65432)
 stream = io.BytesIO()
 
-resolution = (1280, 720)
-
 camera = picamera.PiCamera()
-camera.rotation = configs['CAMERA_ANGLE']
-camera.resolution = resolution
-# resolution = camera.resolution
+camera.rotation = CAMERA_ANGLE
+camera.resolution = CAMERA_RESOLUTION
+# RESOLUTION = camera.resolution
 
 if configs['PREVIEW_ON']:
     camera.start_preview()
 
-    overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
+    overlay_img = Image.new('RGBA', CAMERA_RESOLUTION, (0, 0, 0, 0))
 
     draw = ImageDraw.Draw(overlay_img)
     draw.rectangle([(100, 100), (200, 200)],
@@ -96,7 +96,7 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
                                            top_class))
 
         camera.remove_overlay(overlay)
-        overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
+        overlay_img = Image.new('RGBA', CAMERA_RESOLUTION, (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay_img)
 
         for lbox in lboxes:
