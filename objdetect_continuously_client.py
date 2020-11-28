@@ -1,35 +1,13 @@
 import io
 import argparse
 import yaml
-import struct
-import socket
 
 from datetime import datetime
 import picamera
 from PIL import Image, ImageDraw, ImageFont
 
 import vision
-
-
-class SocketHandler():
-
-    def __init__(self, ip, port):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((ip, port))
-        self.connection = self.sock.makefile('wb')
-
-    def send_image(self, stream):
-        stream.seek(0, 2)
-        self.connection.write(struct.pack('<L', stream.tell()))
-        self.connection.flush()
-        stream.seek(0)
-        self.connection.write(stream.read())
-
-    def __del__(self):
-        print('Cleaning up SocketHandler')
-        self.connection.close()
-        self.sock.close()
-
+from networking import SocketHandler
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -42,12 +20,11 @@ with open(CONFIG_FILE) as f:
 
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
-REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
 CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
 CAMERA_ANGLE = configs['CAMERA_ANGLE']
 
 detector = vision.ObjectDetectionSystem(configs)
-socket_handler = SocketHandler(REMOTE_SERVER_IP, 65432)
+socket_handler = SocketHandler(configs)
 stream = io.BytesIO()
 
 camera = picamera.PiCamera()
