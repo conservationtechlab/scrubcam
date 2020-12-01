@@ -4,7 +4,7 @@ import struct
 import yaml
 
 
-class SocketHandler():
+class ImageSocketHandler():
 
     def __init__(self, configs):
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
@@ -26,3 +26,18 @@ class SocketHandler():
         self.connection.close()
         self.sock.close()
 
+
+# class CommandsSocketHandler():
+
+#     def __init__(self, configs):
+#         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
+#         PORT = 65442
+
+#         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#         self.connect((REMOTE_SERVER_IP, PORT))
+
+#         self.command = 'w'
+        
+#     def recv_command(self):
+        
+    

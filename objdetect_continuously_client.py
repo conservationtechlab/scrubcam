@@ -7,7 +7,7 @@ import picamera
 from PIL import Image, ImageDraw, ImageFont
 
 import vision
-from networking import SocketHandler
+from networking import ImageSocketHandler
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -24,7 +24,7 @@ CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
 CAMERA_ANGLE = configs['CAMERA_ANGLE']
 
 detector = vision.ObjectDetectionSystem(configs)
-socket_handler = SocketHandler(configs)
+image_socket = ImageSocketHandler(configs)
 stream = io.BytesIO()
 
 camera = picamera.PiCamera()
@@ -32,29 +32,55 @@ camera.rotation = CAMERA_ANGLE
 camera.resolution = CAMERA_RESOLUTION
 # RESOLUTION = camera.resolution
 
+
+class OverlayHandler():
+    def __init__(self, camera):
+        self.camera = camera
+        self.clean_image()
+        self.apply_overlay()
+        
+    def draw_box(self, lbox):
+        draw = ImageDraw.Draw(self.image)
+        left, top, width, height = lbox['box']
+        draw.rectangle([(left, top), (left + width, top + height)],
+                       outline=(168, 50, 82),
+                       width=10)
+        font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
+        the_font = ImageFont.truetype(font_path, 50)
+        text = '{}:{:.1f}'.format(detector.class_of_box(lbox),
+                                  100 * lbox['confidence'])
+        draw.text((left + 10, top + 10),
+                  text,
+                  font=the_font,
+                  fill=(255, 0, 0))
+
+    def clean_image(self):
+        self.image = Image.new('RGBA', CAMERA_RESOLUTION, (0, 0, 0, 0))
+
+    def remove_previous(self):
+        self.camera.remove_overlay(self.overlay)
+        
+    def apply_overlay(self):
+        pad = Image.new('RGBA',
+                        (((self.image.size[0] + 31) // 32) * 32,
+                         ((self.image.size[1] + 15) // 16) * 16,
+                        ))
+
+        pad.paste(self.image, (0, 0))
+
+        self.overlay = self.camera.add_overlay(pad.tobytes(), size=self.image.size)
+        self.overlay.alpha = 128
+        self.overlay.layer = 3
+
+
 if configs['PREVIEW_ON']:
     camera.start_preview()
-
-    overlay_img = Image.new('RGBA', CAMERA_RESOLUTION, (0, 0, 0, 0))
-
-    draw = ImageDraw.Draw(overlay_img)
-    draw.rectangle([(100, 100), (200, 200)],
-                   outline=(255, 0, 0),
-                   width=3)
-
-    pad = Image.new('RGBA',
-                    (((overlay_img.size[0] + 31) // 32) * 32,
-                     ((overlay_img.size[1] + 15) // 16) * 16,
-                    ))
-
-    pad.paste(overlay_img, (0, 0))
-
-    overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
-    overlay.alpha = 128
-    overlay.layer = 3
+    overlay_handler = OverlayHandler(camera)
 
 for _ in camera.capture_continuous(stream, format='jpeg'):
-
+    overlay_handler.remove_previous()
+    overlay_handler.clean_image()
+    
     detector.infer(stream)
     detector.print_report()
 
@@ -63,7 +89,7 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
 
         if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
             # send image over socket
-            socket_handler.send_image(stream)
+            image_socket.send_image(stream)
 
             top_class = detector.class_of_box(lboxes[0])
             detector.save_current_frame(top_class)
@@ -72,35 +98,11 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
                 f.write('{} | {}\n'.format(tstamp,
                                            top_class))
 
-        camera.remove_overlay(overlay)
-        overlay_img = Image.new('RGBA', CAMERA_RESOLUTION, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(overlay_img)
-
         for lbox in lboxes:
-            left, top, width, height = lbox['box']
+            overlay_handler.draw_box(lbox)
+            
 
-            draw.rectangle([(left, top), (left + width, top + height)],
-                           outline=(168, 50, 82),
-                           width=10)
-            font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
-            the_font = ImageFont.truetype(font_path, 50)
-            text = '{}:{:.1f}'.format(detector.class_of_box(lbox),
-                                      100 * lbox['confidence'])
-            draw.text((left + 10, top + 10),
-                      text,
-                      font=the_font,
-                      fill=(255, 0, 0))
-
-        pad = Image.new('RGBA',
-                        (((overlay_img.size[0] + 31) // 32) * 32,
-                         ((overlay_img.size[1] + 15) // 16) * 16,
-                        ))
-
-        pad.paste(overlay_img, (0, 0))
-
-        overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
-        overlay.alpha = 128
-        overlay.layer = 3
+    overlay_handler.apply_overlay()
 
     stream.seek(0)
     stream.truncate()
