@@ -8,11 +8,17 @@ class ImageSocketHandler():
 
     def __init__(self, configs):
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
-        PORT = 65432
+        PORT = configs['REMOTE_SERVER_PORT']
+
+        print('[INFO] {} {}'.format(REMOTE_SERVER_IP, PORT))
         
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
-        self.connection = self.sock.makefile('wb')
+        self.connection = self.sock.makefile('rwb')
+
+    def send_no_image(self):
+        self.connection.write(struct.pack('<L', 7))
+        self.connection.flush()
 
     def send_image(self, stream):
         stream.seek(0, 2)
@@ -21,7 +27,12 @@ class ImageSocketHandler():
         stream.seek(0)
         self.connection.write(stream.read())
 
-    def __del__(self):
+    def recv_command(self):
+        message = self.connection.read(struct.calcsize('<L'))
+        command = struct.unpack('<L', message)[0]
+        return command
+        
+    def close(self):
         print('Cleaning up SocketHandler')
         self.connection.close()
         self.sock.close()
