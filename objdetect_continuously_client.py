@@ -10,10 +10,9 @@ import vision
 from networking import ImageSocketHandler
 
 parser = argparse.ArgumentParser()
-parser.add_argument('config',
-                    help='Filename of configuration file')
+parser.add_argument('config_filename')
 args = parser.parse_args()
-CONFIG_FILE = args.config
+CONFIG_FILE = args.config_filename
 
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
@@ -74,50 +73,56 @@ class OverlayHandler():
         self.overlay.layer = 3
 
 
-if configs['PREVIEW_ON']:
-    camera.start_preview()
-    overlay_handler = OverlayHandler(camera)
+def main():
 
-try:
-    for _ in camera.capture_continuous(stream, format='jpeg'):
+    if configs['PREVIEW_ON']:
+        camera.start_preview()
+        overlay_handler = OverlayHandler(camera)
 
-        command = image_socket.recv_command()
-        print('Command: {}'.format(command))
+    try:
+        for _ in camera.capture_continuous(stream, format='jpeg'):
 
-        overlay_handler.remove_previous()
-        overlay_handler.clean_image()
+            command = image_socket.recv_command()
+            print('Command: {}'.format(command))
 
-        detector.infer(stream)
-        detector.print_report()
+            overlay_handler.remove_previous()
+            overlay_handler.clean_image()
 
-        lboxes = detector.labeled_boxes
-        if command == 1:
-            image_socket.send_image(stream)
+            detector.infer(stream)
+            detector.print_report()
 
-        elif len(lboxes) > 0:
-            for lbox in lboxes:
-                overlay_handler.draw_box(lbox)
-
-            if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
-                # send image over socket
+            lboxes = detector.labeled_boxes
+            if command == 1:
                 image_socket.send_image(stream)
 
-                top_class = detector.class_of_box(lboxes[0])
-                detector.save_current_frame(top_class)
-                with open('what_was_seen.log', 'a+') as f:
-                    tstamp = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                    f.write('{} | {}\n'.format(tstamp,
-                                               top_class))
+            elif len(lboxes) > 0:
+                for lbox in lboxes:
+                    overlay_handler.draw_box(lbox)
+
+                if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
+                    # send image over socket
+                    image_socket.send_image(stream)
+
+                    top_class = detector.class_of_box(lboxes[0])
+                    detector.save_current_frame(top_class)
+                    with open('what_was_seen.log', 'a+') as f:
+                        tstamp = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                        f.write('{} | {}\n'.format(tstamp,
+                                                   top_class))
+                else:
+                    image_socket.send_no_image()
+
             else:
                 image_socket.send_no_image()
 
-        else:
-            image_socket.send_no_image()
+            overlay_handler.apply_overlay()
 
-        overlay_handler.apply_overlay()
+            stream.seek(0)
+            stream.truncate()
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt')
+        image_socket.close()
 
-        stream.seek(0)
-        stream.truncate()
-except KeyboardInterrupt:
-    print('KeyboardInterrupt')
-    image_socket.close()
+
+if __name__ == "__main__":
+    main()
