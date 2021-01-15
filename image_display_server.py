@@ -1,4 +1,4 @@
-import sys
+import argparse
 import time
 import socket
 import struct
@@ -7,8 +7,12 @@ import io
 import numpy as np
 import cv2
 
-ip = sys.argv[1]
-port = int(sys.argv[2])
+parser = argparse.ArgumentParser()
+parser.add_argument('ip')
+parser.add_argument('port')
+args = parser.parse_args()
+ip = args.ip
+port = int(args.port)
 
 command = 0
 
@@ -16,35 +20,40 @@ with socket.socket() as server_socket:
     server_socket.bind((ip, port))
     server_socket.listen()
 
-    print('[INFO] Waiting for client connection.')
-    connection, address = server_socket.accept()
-    socket_stream = connection.makefile('rwb')
-    print('[INFO] Connection made to {}.'.format(address))
-
     while True:
-        start = time.time()
+        print('[INFO] Waiting for client connection.')
+        connection, address = server_socket.accept()
+        stream = connection.makefile('rwb')
+        print('[INFO] Connection made to {}.'.format(address))
 
-        socket_stream.write(struct.pack('<L', command))
-        socket_stream.flush()
-        
-        message = socket_stream.read(struct.calcsize('<L'))
-        image_len = struct.unpack('<L', message)[0]
+        while True:
+            start = time.time()
 
-        if not image_len:
-            break
+            stream.write(struct.pack('<L', command))
+            stream.flush()
 
-        if image_len == 7:
-            pass
-        else:
-            image_stream = io.BytesIO()
-            image_stream.write(socket_stream.read(image_len))
-            image_stream.seek(0)
+            data = stream.read(struct.calcsize('<L'))
+            if not data:
+                break
+            image_len = struct.unpack('<L', data)[0]
 
-        
-            data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
-            image = cv2.imdecode(data, 1)
+            if not image_len:
+                break
 
-            elapsed = time.time() - start
-            print('Got image. Took {} seconds. Displaying'.format(elapsed))
-            cv2.imshow('here', image)
-            cv2.waitKey(1)
+            if image_len == 7:
+                pass
+            else:
+                image_stream = io.BytesIO()
+                image_stream.write(stream.read(image_len))
+                image_stream.seek(0)
+
+
+                data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
+                image = cv2.imdecode(data, 1)
+
+                elapsed = time.time() - start
+                print('Got image. Took {} seconds. Displaying'.format(elapsed))
+                cv2.imshow('here', image)
+                cv2.waitKey(1)
+
+        stream.close()
