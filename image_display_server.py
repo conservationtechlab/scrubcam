@@ -93,7 +93,7 @@ def main():
     try:
         while True:
             if image[0] is not None:
-                cv2.imshow('here', img)
+                cv2.imshow('here', image[0])
                 key = cv2.waitKey(30)
                 if key == ord('q'):
                     break
