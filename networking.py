@@ -17,10 +17,13 @@ class ImageSocketHandler():
         self.connection = self.sock.makefile('rwb')
 
     def send_no_image(self):
-        self.connection.write(struct.pack('<L', 7))
+        self.connection.write(struct.pack('<L', 0))
         self.connection.flush()
 
     def send_image(self, stream):
+        self.connection.write(struct.pack('<L', 1))
+        self.connection.flush()
+
         stream.seek(0, 2)
         self.connection.write(struct.pack('<L', stream.tell()))
         self.connection.flush()
