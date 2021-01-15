@@ -44,31 +44,38 @@ class SocketHandler(Thread):
                 break
             
             while True:
-                start = time.time()
+                # start = time.time()
 
+                # write command to connection
                 stream.write(struct.pack('<L', command))
                 stream.flush()
 
+                # read the message type
                 data = stream.read(struct.calcsize('<L'))
                 if not data:
                     break
-                image_len = struct.unpack('<L', data)[0]
+                msg_type = struct.unpack('<L', data)[0]
 
-                if not image_len:
-                    break
-
-                if image_len == 7:
+                # execute appropriate reads based off message type
+                if msg_type == 0:  # no image
                     pass
-                else:
+                    # elapsed = time.time() - start
+                    # print('No image. Took {} seconds'.format(elapsed))
+                elif msg_type == 1: # image without box 
+                    data = stream.read(struct.calcsize('<L'))
+                    if not data:
+                        break
+                    image_len = struct.unpack('<L', data)[0]
+
                     image_stream = io.BytesIO()
                     image_stream.write(stream.read(image_len))
                     image_stream.seek(0)
 
-                elapsed = time.time() - start
-                print('Got image. Took {} seconds'.format(elapsed))
+                    # elapsed = time.time() - start
+                    # print('Got image. Took {} seconds'.format(elapsed))
 
-                data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
-                self.image[0] = cv2.imdecode(data, 1)
+                    data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
+                    self.image[0] = cv2.imdecode(data, 1)
 
             stream.close()
 
@@ -83,14 +90,17 @@ def main():
     comms.setDaemon(True)
     comms.start()
 
-    while True:
-        if image[0] is not None:
-            cv2.imshow('here', image[0])
-            key = cv2.waitKey(30)
-            if key == ord('q'):
-                break
-
-            threads_stop = True
+    try:
+        while True:
+            if image[0] is not None:
+                cv2.imshow('here', img)
+                key = cv2.waitKey(30)
+                if key == ord('q'):
+                    break
+    except KeyboardInterrupt:
+        print('Keyboard interrupt.')
+                
+    threads_stop = True
     time.sleep(.1)
 
 
