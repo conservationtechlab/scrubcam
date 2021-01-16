@@ -1,3 +1,4 @@
+import pickle
 import argparse
 import time
 import socket
@@ -44,8 +45,6 @@ class SocketHandler(Thread):
                 break
             
             while True:
-                # start = time.time()
-
                 # write command to connection
                 stream.write(struct.pack('<L', command))
                 stream.flush()
@@ -59,31 +58,53 @@ class SocketHandler(Thread):
                 # execute appropriate reads based off message type
                 if msg_type == 0:  # no image
                     pass
-                    # elapsed = time.time() - start
-                    # print('No image. Took {} seconds'.format(elapsed))
-                elif msg_type == 1: # image without box 
-                    data = stream.read(struct.calcsize('<L'))
-                    if not data:
+                elif msg_type == 1: # image without box
+                    ok = self._read_image_data(stream)
+                    if not ok:
                         break
-                    image_len = struct.unpack('<L', data)[0]
-
-                    image_stream = io.BytesIO()
-                    image_stream.write(stream.read(image_len))
-                    image_stream.seek(0)
-
-                    # elapsed = time.time() - start
-                    # print('Got image. Took {} seconds'.format(elapsed))
-
-                    data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
-                    self.image[0] = cv2.imdecode(data, 1)
+                elif msg_type == 2: # image with box
+                    ok = self._read_box(stream)
+                    if not ok:
+                        break
+                    
+                    ok = self._read_image_data(stream)
+                    if not ok:
+                        break
 
             stream.close()
 
         self.sock.close()
 
+    def _read_box(self, stream):
+        data = stream.read(struct.calcsize('<L'))
+        if not data:
+            print('1')
+            return False
+        size = struct.unpack('<L', data)[0]
+        data = stream.read(size)
+        if not data:
+            print('2')
+            return False
+        self.image['box'] = pickle.loads(data,
+                                         fix_imports=True,
+                                         encoding='bytes')
+    
+    def _read_image_data(self, stream):
+        data = stream.read(struct.calcsize('<L'))
+        if not data:
+            return False
+        image_len = struct.unpack('<L', data)[0]
+        image_stream = io.BytesIO()
+        image_stream.write(stream.read(image_len))
+        image_stream.seek(0)
+        data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
+        self.image['img'] = cv2.imdecode(data, 1)
 
+        return True
+
+    
 def main():
-    image = [None]
+    image = {'img': None, 'box': None}
     threads_stop = False
 
     comms = SocketHandler(image, lambda : threads_stop)
@@ -92,8 +113,8 @@ def main():
 
     try:
         while True:
-            if image[0] is not None:
-                cv2.imshow('here', image[0])
+            if image['img'] is not None:
+                cv2.imshow('here', image['img'])
                 key = cv2.waitKey(30)
                 if key == ord('q'):
                     break
