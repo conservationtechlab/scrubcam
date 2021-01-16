@@ -15,45 +15,45 @@ class ImageSocketHandler():
         
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
-        self.connection = self.sock.makefile('rwb')
+        self.socket_stream = self.sock.makefile('rwb')
 
     def send_no_image(self):
-        self.connection.write(struct.pack('<L', 0))
-        self.connection.flush()
+        self.socket_stream.write(struct.pack('<L', 0))
+        self.socket_stream.flush()
 
-    def send_image(self, stream):
-        self.connection.write(struct.pack('<L', 1))
-        self.connection.flush()
+    def send_image(self, image_stream):
+        self.socket_stream.write(struct.pack('<L', 1))
+        self.socket_stream.flush()
 
-        self._send_image_data(stream)
+        self._send_image_data(image_stream)
 
-    def send_image_and_box(self, stream, box):
-        self.connection.write(struct.pack('<L', 2))
-        self.connection.flush()
+    def send_image_and_box(self, image_stream, box):
+        self.socket_stream.write(struct.pack('<L', 2))
+        self.socket_stream.flush()
 
         self._send_box(box)
-        self._send_image_data(stream)
+        self._send_image_data(image_stream)
 
-    def _send_image_data(self, stream):
-        # send size of data in image stream
-        stream.seek(0, 2)
-        self.connection.write(struct.pack('<L', stream.tell()))
-        self.connection.flush()
+    def _send_image_data(self, image_stream):
+        # send size of data in image image_stream
+        image_stream.seek(0, 2)
+        self.socket_stream.write(struct.pack('<L', image_stream.tell()))
+        self.socket_stream.flush()
         # send image data
-        stream.seek(0)
-        self.connection.write(stream.read())
-        self.connection.flush()
+        image_stream.seek(0)
+        self.socket_stream.write(image_stream.read())
+        self.socket_stream.flush()
 
     def _send_box(self, box):
         data = pickle.dumps(box)
         size = len(data)
-        self.connection.write(struct.pack('<L', size))
-        self.connection.flush()
-        self.connection.write(data)
-        self.connection.flush()
+        self.socket_stream.write(struct.pack('<L', size))
+        self.socket_stream.flush()
+        self.socket_stream.write(data)
+        self.socket_stream.flush()
 
     def recv_command(self):
-        message = self.connection.read(struct.calcsize('<L'))
+        message = self.socket_stream.read(struct.calcsize('<L'))
         if not message:
             return None
         command = struct.unpack('<L', message)[0]
@@ -61,7 +61,7 @@ class ImageSocketHandler():
         
     def close(self):
         print('Cleaning up SocketHandler')
-        self.connection.close()
+        self.socket_stream.close()
         self.sock.close()
 
 
