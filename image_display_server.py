@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import logging
 import pickle
 import argparse
 import time
@@ -9,6 +12,8 @@ from threading import Thread
 import numpy as np
 import cv2
 
+from viztools import draw
+
 parser = argparse.ArgumentParser()
 parser.add_argument('ip')
 parser.add_argument('port')
@@ -18,9 +23,11 @@ parser.add_argument('-s',
 args = parser.parse_args()
 IP = args.ip
 PORT = int(args.port)
-
 command = 1 if args.send_image else 0
 
+logging.basicConfig(level=logging.INFO,
+                    format='[%(levelname)s] %(message)s)')
+log = logging
 
 class SocketHandler(Thread):
 
@@ -36,10 +43,10 @@ class SocketHandler(Thread):
 
     def run(self):
         while True:
-            print('[INFO] Waiting for client connection.')
+            log.info('Waiting for client connection.')
             connection, address = self.sock.accept()
             stream = connection.makefile('rwb')
-            print('[INFO] Connection made to {}.'.format(address))
+            log.info('Connection made to {}.'.format(address))
 
             if self.stop_flag():
                 break
@@ -65,11 +72,17 @@ class SocketHandler(Thread):
                 elif msg_type == 2: # image with box
                     ok = self._read_box(stream)
                     if not ok:
+                        log.error('Trouble reading box')
                         break
                     
                     ok = self._read_image_data(stream)
                     if not ok:
+                        log.error('trouble reading image')
                         break
+
+                    box = self.image['lbox']['box']
+                    self.image['img'] = draw.box_on_image(self.image['img'],
+                                                          box)
 
             stream.close()
 
@@ -78,16 +91,19 @@ class SocketHandler(Thread):
     def _read_box(self, stream):
         data = stream.read(struct.calcsize('<L'))
         if not data:
-            print('1')
             return False
         size = struct.unpack('<L', data)[0]
+        log.debug(f'length of data told {size}.')
+
         data = stream.read(size)
+        log.debug(f'length of data received {len(data)}.')
         if not data:
-            print('2')
             return False
-        self.image['box'] = pickle.loads(data,
-                                         fix_imports=True,
-                                         encoding='bytes')
+        self.image['lbox'] = pickle.loads(data)
+        els = len(self.image['lbox'])
+        log.debug(f'elements in box: {els}.')
+        
+        return True
     
     def _read_image_data(self, stream):
         data = stream.read(struct.calcsize('<L'))
@@ -104,7 +120,7 @@ class SocketHandler(Thread):
 
     
 def main():
-    image = {'img': None, 'box': None}
+    image = {'img': None, 'lbox': None}
     threads_stop = False
 
     comms = SocketHandler(image, lambda : threads_stop)
@@ -119,7 +135,7 @@ def main():
                 if key == ord('q'):
                     break
     except KeyboardInterrupt:
-        print('Keyboard interrupt.')
+        log.warning('Keyboard interrupt.')
                 
     threads_stop = True
     time.sleep(.1)
