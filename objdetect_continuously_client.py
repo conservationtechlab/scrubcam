@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import io
 import argparse
 import yaml
@@ -21,6 +23,7 @@ RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
 CAMERA_ANGLE = configs['CAMERA_ANGLE']
+FILTER_CLASSES = configs['FILTER_CLASSES']
 
 detector = vision.ObjectDetectionSystem(configs)
 image_socket = ImageSocketHandler(configs)
@@ -103,9 +106,14 @@ def main():
 
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
                     # send image over socket
-                    image_socket.send_image(stream)
-                    # image_socket.send_image_and_box(stream, lboxes[0])
+                    # image_socket.send_image(stream)
+                    
                     top_class = detector.class_of_box(lboxes[0])
+                    if top_class in FILTER_CLASSES:
+                        image_socket.send_image_and_box(stream, lboxes[0])
+                    else:
+                        image_socket.send_no_image()
+
                     detector.save_current_frame(top_class)
                     with open('what_was_seen.log', 'a+') as f:
                         tstamp = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
