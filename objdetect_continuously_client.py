@@ -83,6 +83,8 @@ def main():
         for _ in camera.capture_continuous(stream, format='jpeg'):
 
             command = image_socket.recv_command()
+            if command == None:
+                break
             print('Command: {}'.format(command))
 
             overlay_handler.remove_previous()
@@ -102,7 +104,7 @@ def main():
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
                     # send image over socket
                     image_socket.send_image(stream)
-
+                    # image_socket.send_image_and_box(stream, lboxes[0])
                     top_class = detector.class_of_box(lboxes[0])
                     detector.save_current_frame(top_class)
                     with open('what_was_seen.log', 'a+') as f:
