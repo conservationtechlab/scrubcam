@@ -1,8 +1,11 @@
+import logging
 import socket
 import struct
 import pickle
 
 import yaml
+
+log = logging
 
 
 class ImageSocketHandler():
@@ -11,7 +14,7 @@ class ImageSocketHandler():
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
         PORT = configs['REMOTE_SERVER_PORT']
 
-        print('[INFO] {} {}'.format(REMOTE_SERVER_IP, PORT))
+        log.info('{} {}'.format(REMOTE_SERVER_IP, PORT))
         
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
@@ -60,7 +63,7 @@ class ImageSocketHandler():
         return command
         
     def close(self):
-        print('Cleaning up SocketHandler')
+        log.info('Cleaning up SocketHandler')
         self.socket_stream.close()
         self.sock.close()
 

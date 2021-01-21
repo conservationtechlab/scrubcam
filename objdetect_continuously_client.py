@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 import io
 import argparse
 import yaml
@@ -10,6 +11,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 import vision
 from networking import ImageSocketHandler
+
+logging.basicConfig(level='INFO',
+                    format='[%(levelname)s] %(message)s')
+log = logging
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config_filename')
@@ -88,7 +93,7 @@ def main():
             command = image_socket.recv_command()
             if command == None:
                 break
-            print('Command: {}'.format(command))
+            log.info('Command: {}'.format(command))
 
             overlay_handler.remove_previous()
             overlay_handler.clean_image()
@@ -130,7 +135,7 @@ def main():
             stream.seek(0)
             stream.truncate()
     except KeyboardInterrupt:
-        print('KeyboardInterrupt')
+        log.warning('KeyboardInterrupt')
         image_socket.close()
 
 

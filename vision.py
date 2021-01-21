@@ -1,3 +1,4 @@
+import logging
 import re
 import os
 from datetime import datetime
@@ -6,6 +7,8 @@ import numpy as np
 import cv2
 
 from dnntools import neuralnetwork_coral as nn
+
+log = logging
 
 
 class InferenceSystem():
@@ -36,10 +39,10 @@ class InferenceSystem():
         filename = '{}_{}.jpeg'.format(timestamp, label)
         self.recorded_image_count += 1
         full_filename = os.path.join(self.RECORD_FOLDER, filename)
-        print('[INFO] Saving image to {}'.format(full_filename))
+        log.info('Saving image to {}'.format(full_filename))
         ok = cv2.imwrite(full_filename, self.frame)
         if not ok:
-            print('[WARNING]: did not succeed in image saving.')
+            log.warning('Did not succeed in image saving.')
 
 
 class ImageClassificationSystem(InferenceSystem):
@@ -64,10 +67,10 @@ class ImageClassificationSystem(InferenceSystem):
     def print_report(self):
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
-            print('***{}*** is classification (Top 1) with score: {}'.format(label,
+            log.info('***{}*** is classification (Top 1) with score: {}'.format(label,
                                                                              score))
         else:
-            print('Inference resulted in no class label.')
+            log.info('Inference resulted in no class label.')
 
     def save_image_of_anything_but(self, excluded_class):
         # also thresholds on score threshold defined in config file
@@ -76,7 +79,7 @@ class ImageClassificationSystem(InferenceSystem):
             if label != excluded_class and score >= self.CONF_THRESHOLD:
                 label = re.sub('[()]', '', label)
                 label = '_'.join(label.split(' '))
-                print(label)
+                log.debug(label)
                 self.save_current_frame(label)
 
 
@@ -120,12 +123,12 @@ class ObjectDetectionSystem(InferenceSystem):
             for i, box in enumerate(self.labeled_boxes[:max_boxes]):
                 detected_class = self.class_of_box(box)
                 score = 100 * box['confidence']
-                print('{}: {} ***{}*** detected. With confidence {:.1f}'.format(timestamp,
-                                                                                i,
-                                                                                detected_class,
-                                                                                score))
+                log.info('{}: {} ***{}*** detected. With confidence {:.1f}'.format(timestamp,
+                                                                                   i,
+                                                                                   detected_class,
+                                                                                   score))
         else:
-            print('{}: No boxes detected'.format(timestamp))
+            log.info('{}: No boxes detected'.format(timestamp))
 
     def top_class(self):
         if self.labeled_boxes:
