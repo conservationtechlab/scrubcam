@@ -10,7 +10,7 @@ import picamera
 from PIL import Image, ImageDraw, ImageFont
 
 import vision
-from networking import ImageSocketHandler
+from networking import ClientSocketHandler
 
 logging.basicConfig(level='INFO',
                     format='[%(levelname)s] %(message)s')
@@ -31,7 +31,7 @@ CAMERA_ANGLE = configs['CAMERA_ANGLE']
 FILTER_CLASSES = configs['FILTER_CLASSES']
 
 detector = vision.ObjectDetectionSystem(configs)
-image_socket = ImageSocketHandler(configs)
+socket_handler = ClientSocketHandler(configs)
 stream = io.BytesIO()
 
 camera = picamera.PiCamera()
@@ -90,7 +90,7 @@ def main():
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
 
-            command = image_socket.recv_command()
+            command = socket_handler.recv_command()
             if command == None:
                 break
             log.info('Command: {}'.format(command))
@@ -103,7 +103,7 @@ def main():
 
             lboxes = detector.labeled_boxes
             if command == 1:
-                image_socket.send_image(stream)
+                socket_handler.send_image(stream)
 
             elif len(lboxes) > 0:
                 for lbox in lboxes:
@@ -111,13 +111,13 @@ def main():
 
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
                     # send image over socket
-                    # image_socket.send_image(stream)
+                    # socket_handler.send_image(stream)
                     
                     top_class = detector.class_of_box(lboxes[0])
                     if top_class in FILTER_CLASSES:
-                        image_socket.send_image_and_boxes(stream, lboxes)
+                        socket_handler.send_image_and_boxes(stream, lboxes)
                     else:
-                        image_socket.send_no_image()
+                        socket_handler.send_no_image()
 
                     detector.save_current_frame(top_class)
                     with open('what_was_seen.log', 'a+') as f:
@@ -125,10 +125,10 @@ def main():
                         f.write('{} | {}\n'.format(tstamp,
                                                    top_class))
                 else:
-                    image_socket.send_no_image()
+                    socket_handler.send_no_image()
 
             else:
-                image_socket.send_no_image()
+                socket_handler.send_no_image()
 
             overlay_handler.apply_overlay()
 
@@ -136,7 +136,7 @@ def main():
             stream.truncate()
     except KeyboardInterrupt:
         log.warning('KeyboardInterrupt')
-        image_socket.close()
+        socket_handler.close()
 
 
 if __name__ == "__main__":
