@@ -115,7 +115,7 @@ def main():
                     
                     top_class = detector.class_of_box(lboxes[0])
                     if top_class in FILTER_CLASSES:
-                        image_socket.send_image_and_box(stream, lboxes[0])
+                        image_socket.send_image_and_boxes(stream, lboxes)
                     else:
                         image_socket.send_no_image()
 

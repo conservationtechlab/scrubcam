@@ -30,11 +30,18 @@ class ImageSocketHandler():
 
         self._send_image_data(image_stream)
 
-    def send_image_and_box(self, image_stream, box):
+    # def send_image_and_box(self, image_stream, box):
+    #     self.socket_stream.write(struct.pack('<L', 2))
+    #     self.socket_stream.flush()
+
+    #     self._send_object(box)
+    #     self._send_image_data(image_stream)
+
+    def send_image_and_boxes(self, image_stream, boxes):
         self.socket_stream.write(struct.pack('<L', 2))
         self.socket_stream.flush()
 
-        self._send_box(box)
+        self._send_object(boxes)
         self._send_image_data(image_stream)
 
     def _send_image_data(self, image_stream):
@@ -47,8 +54,8 @@ class ImageSocketHandler():
         self.socket_stream.write(image_stream.read())
         self.socket_stream.flush()
 
-    def _send_box(self, box):
-        data = pickle.dumps(box)
+    def _send_object(self, a_object):
+        data = pickle.dumps(a_object)
         size = len(data)
         self.socket_stream.write(struct.pack('<L', size))
         self.socket_stream.flush()
