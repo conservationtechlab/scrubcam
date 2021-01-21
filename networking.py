@@ -1,14 +1,106 @@
 import logging
+import io
 import socket
 import struct
 import pickle
+from threading import Thread
 
-import yaml
+import cv2
+import numpy as np
 
 log = logging
 
 
-class ImageSocketHandler():
+class ServerSocketHandler(Thread):
+
+    def __init__(self, address, image, stop_flag):
+        super().__init__()
+
+        self.image = image
+        self.stop_flag = stop_flag
+        
+        self.sock = socket.socket()
+        self.sock.bind(address)
+        self.sock.listen()
+
+        # command to send image no matter what. so far no real control
+        # of this is implemented as evidenced in its here being just set
+        self.command = 0
+
+    def run(self):
+        while True:
+            log.info('Waiting for client connection.')
+            connection, address = self.sock.accept()
+            stream = connection.makefile('rwb')
+            log.info('Connection made to {}'.format(address))
+
+            if self.stop_flag():
+                break
+            
+            while True:
+                # write command to connection
+                stream.write(struct.pack('<L', self.command))
+                stream.flush()
+
+                # read the message type
+                data = stream.read(struct.calcsize('<L'))
+                if not data:
+                    break
+                msg_type = struct.unpack('<L', data)[0]
+
+                # execute appropriate reads based off message type
+                if msg_type == 0:  # no image
+                    pass
+                elif msg_type == 1: # image without box
+                    ok = self._read_image_data(stream)
+                    if not ok:
+                        break
+                elif msg_type == 2: # image with boxes
+                    logging.info('Receiving image with boxes.')
+                    ok = self._read_box(stream)
+                    if not ok:
+                        log.error('Trouble reading boxes')
+                        break
+                    
+                    ok = self._read_image_data(stream)
+                    if not ok:
+                        log.error('trouble reading image')
+                        break
+
+            stream.close()
+
+        self.sock.close()
+
+    def _read_box(self, stream):
+        data = stream.read(struct.calcsize('<L'))
+        if not data:
+            return False
+        size = struct.unpack('<L', data)[0]
+        log.debug(f'length of data told {size}.')
+
+        data = stream.read(size)
+        log.debug(f'length of data received {len(data)}.')
+        if not data:
+            return False
+        self.image['lboxes'] = pickle.loads(data)
+        
+        return True
+    
+    def _read_image_data(self, stream):
+        data = stream.read(struct.calcsize('<L'))
+        if not data:
+            return False
+        image_len = struct.unpack('<L', data)[0]
+        image_stream = io.BytesIO()
+        image_stream.write(stream.read(image_len))
+        image_stream.seek(0)
+        data = np.fromstring(image_stream.getvalue(), dtype=np.uint8)
+        self.image['img'] = cv2.imdecode(data, 1)
+
+        return True
+
+
+class ClientSocketHandler():
 
     def __init__(self, configs):
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
