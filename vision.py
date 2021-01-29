@@ -1,3 +1,4 @@
+import csv
 import logging
 import re
 import os
@@ -20,6 +21,7 @@ class InferenceSystem():
         self.RECORD_FOLDER = configs['RECORD_FOLDER']
         self.recorded_image_count = 0
         self.frame = None
+        self._init_csv_file()
 
     def infer_on_frame(self, frame):
         raise NotImplementedError
@@ -33,6 +35,19 @@ class InferenceSystem():
         self.frame = cv2.imdecode(data, 1)
         self.infer_on_frame(self.frame)
 
+    def _init_csv_file(self):
+        now = datetime.now()
+        timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss")
+        filename = '{}.csv'.format(timestamp)
+        full_filename = os.path.join(self.RECORD_FOLDER, filename)
+        f = open(full_filename, 'w')
+        self.csv_writer = csv.writer(f,
+                                     delimiter=',',
+                                     quotechar='"',
+                                     quoting=csv.QUOTE_MINIMAL)
+        field_names = ['TIMESTAMP', 'PATH', 'TOP_CLASS']
+        self.csv_writer.writerow(field_names)
+        
     def save_current_frame(self, label):
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
@@ -41,6 +56,8 @@ class InferenceSystem():
         full_filename = os.path.join(self.RECORD_FOLDER, filename)
         log.info('Saving image to {}'.format(full_filename))
         ok = cv2.imwrite(full_filename, self.frame)
+        fields = [timestamp, full_filename, label]
+        self.csv_writer.writerow(fields)
         if not ok:
             log.warning('Did not succeed in image saving.')
 
@@ -110,9 +127,11 @@ class ObjectDetectionSystem(InferenceSystem):
                                                        frame,
                                                        self.CONF_THRESHOLD,
                                                        self.NMS_THRESHOLD)
-
-    def class_of_box(self, box):
-        return self.OBJ_CLASSES[box['class_id']]
+        for lbox in self.labeled_boxes:
+            lbox['class_name'] = self.class_of_box(lbox)
+        
+    def class_of_box(self, lbox):
+        return self.OBJ_CLASSES[lbox['class_id']]
 
     def print_report(self, max_boxes=None):
         now = datetime.now()
