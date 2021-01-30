@@ -53,7 +53,8 @@ class InferenceSystem():
         filename = '{}_{}.jpeg'.format(timestamp, label)
         self.recorded_image_count += 1
         full_filename = os.path.join(self.RECORD_FOLDER, filename)
-        log.info('Saving image to {}'.format(full_filename))
+        log.info('Saving image.')
+        log.debug('Image filename is {}'.format(full_filename))
         ok = cv2.imwrite(full_filename, self.frame)
         if not ok:
             log.warning('Did not succeed in image saving.')
@@ -143,12 +144,11 @@ class ObjectDetectionSystem(InferenceSystem):
             for i, box in enumerate(self.labeled_boxes[:max_boxes]):
                 detected_class = self.class_of_box(box)
                 score = 100 * box['confidence']
-                log.info('{}: {} ***{}*** detected. With confidence {:.1f}'.format(timestamp,
-                                                                                   i,
-                                                                                   detected_class,
-                                                                                   score))
+                log.info('Box {}: {}. With confidence {:.1f}'.format(i,
+                                                                     detected_class,
+                                                                     score))
         else:
-            log.info('{}: No boxes detected'.format(timestamp))
+            log.info('No boxes detected')
 
     def top_class(self):
         if self.labeled_boxes:
