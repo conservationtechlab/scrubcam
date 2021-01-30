@@ -91,7 +91,7 @@ def main():
         for _ in camera.capture_continuous(stream, format='jpeg'):
 
             command = socket_handler.recv_command()
-            if command == None:
+            if command is None:
                 break
             log.info('Command: {}'.format(command))
 
@@ -112,14 +112,14 @@ def main():
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
                     # send image over socket
                     # socket_handler.send_image(stream)
-                    
-                    top_class = detector.class_of_box(lboxes[0])
+
+                    top_class = lboxes[0]['class_name']
                     if top_class in FILTER_CLASSES:
                         socket_handler.send_image_and_boxes(stream, lboxes)
                     else:
                         socket_handler.send_no_image()
 
-                    detector.save_current_frame(top_class)
+                    detector.save_current_frame(None, lboxes=lboxes)
                     with open('what_was_seen.log', 'a+') as f:
                         tstamp = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                         f.write('{} | {}\n'.format(tstamp,

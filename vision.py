@@ -17,15 +17,14 @@ class InferenceSystem():
         # CV constants
         self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
         self.MODEL_PATH = configs['MODEL_PATH']
-        self.MODEL_WEIGHTS = 'N/A' # not applicable
+        self.MODEL_WEIGHTS = 'N/A'  # not applicable
         self.RECORD_FOLDER = configs['RECORD_FOLDER']
         self.recorded_image_count = 0
         self.frame = None
-        self._init_csv_file()
 
     def infer_on_frame(self, frame):
         raise NotImplementedError
-        
+
     def infer(self, stream):
         # may not be necessary since using .getvalue()
         stream.seek(0)
@@ -35,31 +34,33 @@ class InferenceSystem():
         self.frame = cv2.imdecode(data, 1)
         self.infer_on_frame(self.frame)
 
-    def _init_csv_file(self):
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss")
+    def _write_boxes_file(self, timestamp, lboxes):
         filename = '{}.csv'.format(timestamp)
         full_filename = os.path.join(self.RECORD_FOLDER, filename)
-        f = open(full_filename, 'w')
-        self.csv_writer = csv.writer(f,
-                                     delimiter=',',
-                                     quotechar='"',
-                                     quoting=csv.QUOTE_MINIMAL)
-        field_names = ['TIMESTAMP', 'PATH', 'TOP_CLASS']
-        self.csv_writer.writerow(field_names)
-        
-    def save_current_frame(self, label):
+        with open(full_filename, 'w') as f:
+            self.csv_writer = csv.writer(f,
+                                         delimiter=',',
+                                         quotechar='"',
+                                         quoting=csv.QUOTE_MINIMAL)
+            for lbox in lboxes:
+                self.csv_writer.writerow([lbox['class_name'], *lbox['box']])
+
+    def save_current_frame(self, label, lboxes=None):
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
+        if label is None:
+            label = lboxes[0]['class_name']
         filename = '{}_{}.jpeg'.format(timestamp, label)
         self.recorded_image_count += 1
         full_filename = os.path.join(self.RECORD_FOLDER, filename)
         log.info('Saving image to {}'.format(full_filename))
         ok = cv2.imwrite(full_filename, self.frame)
-        fields = [timestamp, full_filename, label]
-        self.csv_writer.writerow(fields)
         if not ok:
             log.warning('Did not succeed in image saving.')
+
+        if lboxes is not None:
+            log.debug('writing csv')
+            self._write_boxes_file(timestamp, lboxes)
 
 
 class ImageClassificationSystem(InferenceSystem):
@@ -85,7 +86,7 @@ class ImageClassificationSystem(InferenceSystem):
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
             log.info('***{}*** is classification (Top 1) with score: {}'.format(label,
-                                                                             score))
+                                                                                score))
         else:
             log.info('Inference resulted in no class label.')
 
@@ -111,7 +112,7 @@ class ObjectDetectionSystem(InferenceSystem):
         MODEL_CONFIG = os.path.join(self.MODEL_PATH,
                                     configs['OBJ_MODEL_CONFIG_FILE'])
         OBJ_CLASSES_FILE = os.path.join(self.MODEL_PATH,
-                                    configs['OBJ_CLASS_NAMES_FILE'])
+                                        configs['OBJ_CLASS_NAMES_FILE'])
         self.OBJ_CLASSES = nn.read_classes_from_file(OBJ_CLASSES_FILE)
 
         self.NMS_THRESHOLD = configs['NMS_THRESHOLD']
@@ -129,7 +130,7 @@ class ObjectDetectionSystem(InferenceSystem):
                                                        self.NMS_THRESHOLD)
         for lbox in self.labeled_boxes:
             lbox['class_name'] = self.class_of_box(lbox)
-        
+
     def class_of_box(self, lbox):
         return self.OBJ_CLASSES[lbox['class_id']]
 
