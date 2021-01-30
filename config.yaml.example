@@ -25,7 +25,7 @@ DISPLAY_RESOLUTION: [640, 480]
 # AI CONFIGURATIONS
 # bird, person, giraffe, cup, cat, dog, horse, sheep, cow, elephant, bear, zebra
 # TRACKED_CLASS: [giraffe, person]
-FILTER_CLASS: bird
+FILTER_CLASSES: [bird, person]
 
 CONF_THRESHOLD: .1
 RECORD_CONF_THRESHOLD: .6
