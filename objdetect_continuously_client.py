@@ -10,7 +10,7 @@ import picamera
 from PIL import Image, ImageDraw, ImageFont
 
 import vision
-from networking import ClientSocketHandler
+from scrubcam.networking import ClientSocketHandler
 
 logging.basicConfig(level='INFO',
                     format='[%(levelname)s] %(message)s')

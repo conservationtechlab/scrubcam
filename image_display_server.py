@@ -5,8 +5,8 @@ import time
 
 import cv2
 
-from display import Viewer
-from networking import ServerSocketHandler
+from scrubcam.display import Viewer
+from scrubcam.networking import ServerSocketHandler
 
 parser = argparse.ArgumentParser()
 parser.add_argument('ip')
