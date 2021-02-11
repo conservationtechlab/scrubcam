@@ -10,6 +10,13 @@ import numpy as np
 
 log = logging
 
+def create_image_dict():
+    """Creates the image dictionary that we are using as the way a
+    ServerSocketHandler (and perhaps other things) share what they
+    receive from the socket with other parts of the program.
+
+    """
+    return {'img': None, 'lboxes': None}
 
 class ServerSocketHandler(Thread):
 

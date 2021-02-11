@@ -6,7 +6,7 @@ import time
 import cv2
 
 from scrubcam.display import Viewer
-from scrubcam.networking import ServerSocketHandler
+from scrubcam.networking import ServerSocketHandler, create_image_dict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('ip')
@@ -23,7 +23,7 @@ log = logging
 def main():
     window = 'Viewer'
 
-    image = {'img': None, 'lboxes': None}
+    image = create_image_dict()
     threads_stop = False
 
     comms = ServerSocketHandler((IP, PORT), image, lambda : threads_stop)
