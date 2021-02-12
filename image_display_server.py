@@ -41,7 +41,7 @@ def main():
                            image['img'])
                 key = cv2.waitKey(30)
                 if key == ord('q'):
-                    stop_flag = True
+                    threads_stop = True
                     break
 
         cv2.destroyAllWindows()
