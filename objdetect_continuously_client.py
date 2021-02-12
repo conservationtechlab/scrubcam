@@ -9,7 +9,7 @@ from datetime import datetime
 import picamera
 from PIL import Image, ImageDraw, ImageFont
 
-import vision
+from scrubcam.vision import ObjectDetectionSystem
 from scrubcam.networking import ClientSocketHandler
 
 logging.basicConfig(level='INFO',
@@ -30,7 +30,7 @@ CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
 CAMERA_ANGLE = configs['CAMERA_ANGLE']
 FILTER_CLASSES = configs['FILTER_CLASSES']
 
-detector = vision.ObjectDetectionSystem(configs)
+detector = ObjectDetectionSystem(configs)
 socket_handler = ClientSocketHandler(configs)
 stream = io.BytesIO()
 
