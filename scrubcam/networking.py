@@ -8,8 +8,16 @@ from threading import Thread
 import cv2
 import numpy as np
 
-log = logging
+log = logging.getLogger(__name__)
 
+
+def create_image_dict():
+    """Creates the image dictionary that we are using as the way a
+    ServerSocketHandler (and perhaps other things) share what they
+    receive from the socket with other parts of the program.
+
+    """
+    return {'img': None, 'lboxes': None}
 
 class ServerSocketHandler(Thread):
 
@@ -56,7 +64,7 @@ class ServerSocketHandler(Thread):
                     if not ok:
                         break
                 elif msg_type == 2: # image with boxes
-                    logging.info('Receiving image with boxes.')
+                    log.info('Receiving image with boxes.')
                     ok = self._read_box(stream)
                     if not ok:
                         log.error('Trouble reading boxes')

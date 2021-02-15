@@ -5,8 +5,8 @@ import time
 
 import cv2
 
-from display import Viewer
-from networking import ServerSocketHandler
+from scrubcam.display import Viewer
+from scrubcam.networking import ServerSocketHandler, create_image_dict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('ip')
@@ -23,7 +23,7 @@ log = logging
 def main():
     window = 'Viewer'
 
-    image = {'img': None, 'lboxes': None}
+    image = create_image_dict()
     threads_stop = False
 
     comms = ServerSocketHandler((IP, PORT), image, lambda : threads_stop)
@@ -41,7 +41,7 @@ def main():
                            image['img'])
                 key = cv2.waitKey(30)
                 if key == ord('q'):
-                    stop_flag = True
+                    threads_stop = True
                     break
 
         cv2.destroyAllWindows()

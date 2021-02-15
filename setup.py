@@ -5,8 +5,8 @@ setuptools.setup(
     name="scrubcam",
     author="Ian Ingram",
     version="0.0.1",
-    author_email="ianishidden@gmail.com",
-    description="Code for the Scrubcam and Sage Scrubcam projects.",
+    author_email="iingram@sandiegozoo.org",
+    description="Code for ScrubCam: Edge-AI-enabled field camera.",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
