@@ -13,8 +13,8 @@ from scrubcam.vision import ObjectDetectionSystem
 from scrubcam.networking import ClientSocketHandler
 
 logging.basicConfig(level='INFO',
-                    format='[%(levelname)s] %(message)s')
-log = logging
+                    format='[%(levelname)s] %(message)s (%(name)s)')
+log = logging.getLogger('main')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config_filename')
@@ -93,7 +93,7 @@ def main():
             command = socket_handler.recv_command()
             if command is None:
                 break
-            log.info('Command: {}'.format(command))
+            log.info('Command from server is {}'.format(command))
 
             overlay_handler.remove_previous()
             overlay_handler.clean_image()
