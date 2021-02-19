@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import logging
 import io
 import argparse
 import yaml
@@ -6,7 +9,11 @@ from datetime import datetime
 import picamera
 from PIL import Image, ImageDraw, ImageFont
 
-import vision
+from scrubcam.vision import ObjectDetectionSystem
+
+logging.basicConfig(level='INFO',
+                    format='[%(levelname)s] %(message)s (%(name)s)')
+log = logging.getLogger('main')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -20,7 +27,7 @@ with open(CONFIG_FILE) as f:
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 
-detector = vision.ObjectDetectionSystem(configs)
+detector = ObjectDetectionSystem(configs)
 
 stream = io.BytesIO()
 
@@ -60,7 +67,7 @@ for _ in camera.capture_continuous(stream, format='jpeg'):
 
     lboxes = detector.labeled_boxes
     if len(lboxes) > 0:
-
+        
         if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
             top_class = detector.class_of_box(lboxes[0])
             detector.save_current_frame(top_class)
