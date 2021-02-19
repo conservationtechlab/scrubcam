@@ -4,7 +4,7 @@ from threading import Thread
 
 from viztools import draw
 
-log = logging
+log = logging.getLogger(__name__)
 
 
 class Viewer(Thread):
