@@ -7,12 +7,11 @@ log = logging.getLogger(__name__)
 
 class Display():
 
-    def __init__(self, configs, camera):
+    def __init__(self, configs, camera, state):
         self.resolution = configs['CAMERA_RESOLUTION']
 
         self.camera = camera
-
-        self.camera.start_preview()
+        self.state = state
 
         overlay_img = Image.new('RGBA', self.resolution, (0, 0, 0, 0))
 
@@ -33,20 +32,22 @@ class Display():
         overlay_img = Image.new('RGBA', self.resolution, (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay_img)
 
-        for lbox in lboxes:
-            left, top, width, height = lbox['box']
+        if self.state.value == 3:
 
-            draw.rectangle([(left, top), (left + width, top + height)],
-                           outline=(168, 50, 82),
-                           width=10)
-            font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
-            the_font = ImageFont.truetype(font_path, 50)
-            text = '{}:{:.1f}'.format(lbox['class_name'],
-                                      100 * lbox['confidence'])
-            draw.text((left + 10, top + 10),
-                      text,
-                      font=the_font,
-                      fill=(255, 0, 0))
+            for lbox in lboxes:
+                left, top, width, height = lbox['box']
+
+                draw.rectangle([(left, top), (left + width, top + height)],
+                               outline=(168, 50, 82),
+                               width=10)
+                font = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
+                the_font = ImageFont.truetype(font, 50)
+                text = '{}:{:.1f}'.format(lbox['class_name'],
+                                          100 * lbox['confidence'])
+                draw.text((left + 10, top + 10),
+                          text,
+                          font=the_font,
+                          fill=(255, 0, 0))
 
         pad = Image.new('RGBA',
                         (((overlay_img.size[0] + 31) // 32) * 32,
@@ -61,8 +62,9 @@ class Display():
 
 
 class OverlayHandler():
-    def __init__(self, camera):
+    def __init__(self, camera, resolution):
         self.camera = camera
+        self.resolution = resolution
         self.clean_image()
         self.apply_overlay()
 
@@ -74,7 +76,7 @@ class OverlayHandler():
                        width=10)
         font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
         the_font = ImageFont.truetype(font_path, 50)
-        text = '{}:{:.1f}'.format(detector.class_of_box(lbox),
+        text = '{}:{:.1f}'.format(lbox['class_name'],
                                   100 * lbox['confidence'])
         draw.text((left + 10, top + 10),
                   text,
@@ -82,7 +84,7 @@ class OverlayHandler():
                   fill=(255, 0, 0))
 
     def clean_image(self):
-        self.image = Image.new('RGBA', CAMERA_RESOLUTION, (0, 0, 0, 0))
+        self.image = Image.new('RGBA', self.resolution, (0, 0, 0, 0))
 
     def remove_previous(self):
         self.camera.remove_overlay(self.overlay)
@@ -90,8 +92,7 @@ class OverlayHandler():
     def apply_overlay(self):
         pad = Image.new('RGBA',
                         (((self.image.size[0] + 31) // 32) * 32,
-                         ((self.image.size[1] + 15) // 16) * 16,
-                        ))
+                         ((self.image.size[1] + 15) // 16) * 16,))
 
         pad.paste(self.image, (0, 0))
 
@@ -101,7 +102,6 @@ class OverlayHandler():
         self.overlay.layer = 3
 
 
-        
 # class Viewer(Thread):
 
 #     def __init__(self, image, stop_flag):
