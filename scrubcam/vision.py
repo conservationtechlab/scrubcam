@@ -60,7 +60,7 @@ class InferenceSystem():
             log.warning('Did not succeed in image saving.')
 
         if lboxes is not None:
-            log.debug('writing csv')
+            log.debug('Writing csv files of boxes.')
             self._write_boxes_file(timestamp, lboxes)
 
 

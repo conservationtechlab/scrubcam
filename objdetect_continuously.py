@@ -39,10 +39,20 @@ class Recorder(BaseRecorder):
         self.vid_count = 0
 
     def start_recording(self):
-        log.warning('THIS METHOD NOT IMPLEMENTED')
+        self.recording = True
+        log.info('Recording turned on.')
 
     def stop_recording(self):
-        log.warning('THIS METHOD NOT IMPLEMENTED')
+        self.recording = False
+        log.info('Recording turned off.')
+
+    def update(self, top_class):
+        self.vid_count += 1
+        with open('what_was_seen.log', 'a+') as f:
+            time_strg = '%Y-%m-%d %H:%M:%S'
+            tstamp = str(datetime.now().strftime(time_strg))
+            f.write('{} | {}\n'.format(tstamp,
+                                       top_class))
 
 
 def main():
@@ -81,14 +91,11 @@ def main():
             display.update(lboxes)
 
             if len(lboxes) > 0:
-                if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
+                if (recorder.recording
+                    and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD):
                     top_class = detector.class_of_box(lboxes[0])
-                    detector.save_current_frame(top_class)
-                    with open('what_was_seen.log', 'a+') as f:
-                        time_strg = '%Y-%m-%d %H:%M:%S'
-                        tstamp = str(datetime.now().strftime(time_strg))
-                        f.write('{} | {}\n'.format(tstamp,
-                                                   top_class))
+                    detector.save_current_frame(None, lboxes=lboxes)
+                    recorder.update(top_class)
 
             # reset the stream for the next capture
             stream.seek(0)
