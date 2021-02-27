@@ -59,6 +59,7 @@ def main():
 
         recorder = Recorder(configs)
         state = State(4)
+        state.value = 1
         display = Display(configs, recorder.camera, state)
 
         button_handler = ButtonHandler(recorder,
