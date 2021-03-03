@@ -8,13 +8,12 @@ RECORD: False
 # length of videos to record in seconds
 RECORD_LENGTH: 300  # 60 * 5 = 300 for 5 minutes
 # num seconds after program starts to begin video recording
-PAUSE_BEFORE_RECORD: 5  # 90 for current spec
+PAUSE_BEFORE_RECORD: 5
 
 # CAMERA CONFIGURATIONS
 CAMERA_RESOLUTION: [1920, 1080]
 VIDEO_QUALITY: 20  # between 1 and 40, 1 is highest, 40 lowest
 FRAME_RATE: 25
-CAMERA_ANGLE: 90
 CAMERA_ROTATION: 180
 PREVIEW_ON: true
 
