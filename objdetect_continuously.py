@@ -30,6 +30,7 @@ with open(CONFIG_FILE) as f:
 
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
+FILTER_CLASSES = configs['FILTER_CLASSES']
 
 
 class Recorder(BaseRecorder):
@@ -46,16 +47,20 @@ class Recorder(BaseRecorder):
         self.recording = False
         log.info('Recording turned off.')
 
-    def update(self, top_class):
+    def update(self, lboxes):
         self.vid_count += 1
         with open('what_was_seen.log', 'a+') as f:
             time_strg = '%Y-%m-%d %H:%M:%S'
             tstamp = str(datetime.now().strftime(time_strg))
+            top_class = lboxes[0]['class_name']
             f.write('{} | {}\n'.format(tstamp,
                                        top_class))
 
 
 def main():
+    log.info(f'Confidence threshold to save image: {RECORD_CONF_THRESHOLD}')
+    log.info(f'Target classes: {FILTER_CLASSES}')
+
     try:
         flags = {'stop_buttons_flag': False}
 
@@ -91,11 +96,12 @@ def main():
             display.update(lboxes)
 
             if len(lboxes) > 0:
+                class_names = [lbox['class_name'] for lbox in lboxes]
                 if (recorder.recording
+                    and any(item in FILTER_CLASSES for item in class_names)
                     and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD):
-                    top_class = detector.class_of_box(lboxes[0])
                     detector.save_current_frame(None, lboxes=lboxes)
-                    recorder.update(top_class)
+                    recorder.update(lboxes)
 
             # reset the stream for the next capture
             stream.seek(0)
