@@ -148,7 +148,7 @@ class ObjectDetectionSystem(InferenceSystem):
                                                                      detected_class,
                                                                      score))
         else:
-            log.info('No boxes detected')
+            log.debug('No boxes detected')
 
     def top_class(self):
         if self.labeled_boxes:

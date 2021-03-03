@@ -8,16 +8,13 @@ import yaml
 
 from datetime import datetime
 
+from dencam import logs
 from dencam.buttons import ButtonHandler
-from dencam.gui import State, Controller
+from dencam.gui import State, BaseController
 from dencam.recorder import BaseRecorder
 
 from scrubcam.vision import ObjectDetectionSystem
 from scrubcam.display import Display
-
-logging.basicConfig(level='INFO',
-                    format='[%(levelname)s] %(message)s (%(name)s)')
-log = logging.getLogger('main')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -28,9 +25,21 @@ CONFIG_FILE = args.config
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
+LOGGING_LEVEL = logging.INFO
+log = logs.setup_logger(LOGGING_LEVEL, '/home/ian/scrubcam.log')
+log.info('*** SCRUBCAM STARTING UP ***')
+    
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 FILTER_CLASSES = configs['FILTER_CLASSES']
+
+
+class Controller(BaseController):
+    def __init__(self, configs, recorder, state):
+        super().__init__(configs, recorder, state)
+
+    def _update(self):
+        super()._update()
 
 
 class Recorder(BaseRecorder):
@@ -38,8 +47,11 @@ class Recorder(BaseRecorder):
         super().__init__(configs)
 
         self.vid_count = 0
+        self.start_recording()
 
     def start_recording(self):
+        self.record_start_time = time.time()
+
         self.recording = True
         log.info('Recording turned on.')
 
@@ -83,7 +95,7 @@ def main():
         button_handler.setDaemon(True)
         button_handler.start()
 
-        controller = Controller(configs, recorder, state)
+        controller = BaseController(configs, recorder, state)
         controller.setDaemon(True)
         controller.start()
 
@@ -97,11 +109,13 @@ def main():
 
             if len(lboxes) > 0:
                 class_names = [lbox['class_name'] for lbox in lboxes]
-                if (recorder.recording
-                    and any(item in FILTER_CLASSES for item in class_names)
+                if (any(item in FILTER_CLASSES for item in class_names)
                     and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD):
-                    detector.save_current_frame(None, lboxes=lboxes)
-                    recorder.update(lboxes)
+                    log.info('A box labeled w/ target class '
+                             + 'and over thresh detected.')
+                    if (recorder.recording):
+                        detector.save_current_frame(None, lboxes=lboxes)
+                        recorder.update(lboxes)
 
             # reset the stream for the next capture
             stream.seek(0)
