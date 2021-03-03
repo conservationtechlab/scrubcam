@@ -59,7 +59,7 @@ class Recorder(BaseRecorder):
 
 def main():
     log.info(f'Confidence threshold to save image: {RECORD_CONF_THRESHOLD}')
-    log.info(f'Target classes: {FILTER_CLASSES}')
+    log.info(f'\n{"-"*40}\nTARGET CLASSES: {" | ".join(FILTER_CLASSES)}\n{"-"*40}')
 
     try:
         flags = {'stop_buttons_flag': False}
