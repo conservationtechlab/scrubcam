@@ -9,7 +9,7 @@ import cv2
 
 from dnntools import neuralnetwork_coral as nn
 
-log = logging
+log = logging.getLogger(__name__)
 
 
 class InferenceSystem():
@@ -62,7 +62,7 @@ class InferenceSystem():
             log.warning('Did not succeed in image saving.')
 
         if lboxes is not None:
-            log.debug('writing csv')
+            log.debug('Writing csv files of boxes.')
             self._write_boxes_file(timestamp, lboxes)
 
 
@@ -150,7 +150,7 @@ class ObjectDetectionSystem(InferenceSystem):
                                                                      detected_class,
                                                                      score))
         else:
-            log.info('No boxes detected')
+            log.debug('No boxes detected')
 
     def top_class(self):
         if self.labeled_boxes:

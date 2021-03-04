@@ -1,12 +1,20 @@
+#!/usr/bin/env python
+
+import time
+import logging
 import io
 import argparse
 import yaml
 
 from datetime import datetime
-import picamera
-from PIL import Image, ImageDraw, ImageFont
 
-import vision
+from dencam import logs
+from dencam.buttons import ButtonHandler
+from dencam.gui import State, BaseController
+from dencam.recorder import BaseRecorder
+
+from scrubcam.vision import ObjectDetectionSystem
+from scrubcam.display import Display
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -17,88 +25,108 @@ CONFIG_FILE = args.config
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
+LOGGING_LEVEL = logging.INFO
+log = logs.setup_logger(LOGGING_LEVEL, '/home/ian/scrubcam.log')
+log.info('*** SCRUBCAM STARTING UP ***')
+    
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
-
-detector = vision.ObjectDetectionSystem(configs)
-
-stream = io.BytesIO()
-
-resolution = (1280, 720)
-
-camera = picamera.PiCamera()
-camera.rotation = configs['CAMERA_ANGLE']
-camera.resolution = resolution
-# resolution = camera.resolution
+FILTER_CLASSES = configs['FILTER_CLASSES']
 
 
-if configs['PREVIEW_ON']:
-    camera.start_preview()
+class Controller(BaseController):
+    def __init__(self, configs, recorder, state):
+        super().__init__(configs, recorder, state)
 
-    overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
+    def _update(self):
+        super()._update()
 
-    draw = ImageDraw.Draw(overlay_img)
-    draw.rectangle([(100, 100), (200, 200)],
-                   outline=(255, 0, 0),
-                   width=3)
 
-    pad = Image.new('RGBA',
-                    (((overlay_img.size[0] + 31) // 32) * 32,
-                     ((overlay_img.size[1] + 15) // 16) * 16,
-                    ))
+class Recorder(BaseRecorder):
+    def __init__(self, configs):
+        super().__init__(configs)
 
-    pad.paste(overlay_img, (0, 0))
+        self.vid_count = 0
+        self.start_recording()
 
-    overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
-    overlay.alpha = 128
-    overlay.layer = 3
+    def start_recording(self):
+        self.record_start_time = time.time()
 
-for _ in camera.capture_continuous(stream, format='jpeg'):
+        self.recording = True
+        log.info('Recording turned on.')
 
-    detector.infer(stream)
-    detector.print_report()
+    def stop_recording(self):
+        self.recording = False
+        log.info('Recording turned off.')
 
-    lboxes = detector.labeled_boxes
-    if len(lboxes) > 0:
+    def update(self, lboxes):
+        self.vid_count += 1
+        with open('what_was_seen.log', 'a+') as f:
+            time_strg = '%Y-%m-%d %H:%M:%S'
+            tstamp = str(datetime.now().strftime(time_strg))
+            top_class = lboxes[0]['class_name']
+            f.write('{} | {}\n'.format(tstamp,
+                                       top_class))
 
-        if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
-            top_class = detector.class_of_box(lboxes[0])
-            detector.save_current_frame(top_class)
-            with open('what_was_seen.log', 'a+') as f:
-                tstamp = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                f.write('{} | {}\n'.format(tstamp,
-                                           top_class))
 
-        camera.remove_overlay(overlay)
-        overlay_img = Image.new('RGBA', resolution, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(overlay_img)
+def main():
+    log.info(f'Confidence threshold to save image: {RECORD_CONF_THRESHOLD}')
+    log.info(f'\n{"-"*40}\nTARGET CLASSES: {" | ".join(FILTER_CLASSES)}\n{"-"*40}')
 
-        for lbox in lboxes:
-            left, top, width, height = lbox['box']
+    try:
+        flags = {'stop_buttons_flag': False}
 
-            draw.rectangle([(left, top), (left + width, top + height)],
-                           outline=(168, 50, 82),
-                           width=10)
-            font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
-            the_font = ImageFont.truetype(font_path, 50)
-            text = '{}:{:.1f}'.format(detector.class_of_box(lbox),
-                                      100 * lbox['confidence'])
-            draw.text((left + 10, top + 10),
-                      text,
-                      font=the_font,
-                      fill=(255, 0, 0))
+        def cleanup(flags):
+            flags['stop_button_flag'] = True
+            time.sleep(.1)
 
-        pad = Image.new('RGBA',
-                        (((overlay_img.size[0] + 31) // 32) * 32,
-                         ((overlay_img.size[1] + 15) // 16) * 16,
-                        ))
+        detector = ObjectDetectionSystem(configs)
 
-        pad.paste(overlay_img, (0, 0))
+        stream = io.BytesIO()
 
-        overlay = camera.add_overlay(pad.tobytes(), size=overlay_img.size)
-        overlay.alpha = 128
-        overlay.layer = 3
+        recorder = Recorder(configs)
+        state = State(4)
+        state.value = 1
+        display = Display(configs, recorder.camera, state)
 
-    # reset the stream for the next capture
-    stream.seek(0)
-    stream.truncate()
+        button_handler = ButtonHandler(recorder,
+                                       state,
+                                       lambda: flags['stop_buttons_flag'])
+        button_handler.setDaemon(True)
+        button_handler.start()
+
+        controller = BaseController(configs, recorder, state)
+        controller.setDaemon(True)
+        controller.start()
+
+        for _ in recorder.camera.capture_continuous(stream, format='jpeg'):
+
+            detector.infer(stream)
+            detector.print_report()
+
+            lboxes = detector.labeled_boxes
+            display.update(lboxes)
+
+            if len(lboxes) > 0:
+                class_names = [lbox['class_name'] for lbox in lboxes]
+                if (any(item in FILTER_CLASSES for item in class_names)
+                    and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD):
+                    log.info('A box labeled w/ target class '
+                             + 'and over thresh detected.')
+                    if (recorder.recording):
+                        detector.save_current_frame(None, lboxes=lboxes)
+                        recorder.update(lboxes)
+
+            # reset the stream for the next capture
+            stream.seek(0)
+            stream.truncate()
+    except KeyboardInterrupt:
+        log.debug('Keyboard Interrupt.')
+        cleanup(flags)
+    except Exception:
+        log.exception('Exception in primary try block.')
+        cleanup(flags)
+
+
+if __name__ == '__main__':
+    main()
