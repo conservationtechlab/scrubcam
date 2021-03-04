@@ -29,7 +29,7 @@ with open(CONFIG_FILE) as f:
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
-CAMERA_ANGLE = configs['CAMERA_ANGLE']
+CAMERA_ROTATION = configs['CAMERA_ROTATION']
 FILTER_CLASSES = configs['FILTER_CLASSES']
 
 
@@ -39,7 +39,7 @@ def main():
     stream = io.BytesIO()
 
     camera = picamera.PiCamera()
-    camera.rotation = CAMERA_ANGLE
+    camera.rotation = CAMERA_ROTATION
     camera.resolution = CAMERA_RESOLUTION
 
     state = State(4)
