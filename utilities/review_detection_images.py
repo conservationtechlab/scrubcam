@@ -5,7 +5,6 @@ Takes a path to a folder of images and csvs and displays all the
 images from the associated run with boxes drawn upon them. Optionally
 assembles these images into a video (particularly useful if the
 original images began as an image sequence exported from a video.
-
 """
 import os
 import csv
@@ -37,14 +36,7 @@ export_video = args.export
 fps = int(args.fps)
 conf_threshold = float(args.conf)
 
-# label_map = {'1': 'animal',
-#              '2': 'person',
-#              '3': 'vehicle'}
-
-# if args.only_animals:
-#     filter_labels = ['animal']
-# else:
-#     filter_labels = ['animal', 'person', 'vehicle']
+FILTER_LABELS = ['person']
 
 img_paths = glob.glob(os.path.join(path, '*.jpeg'))
 img_paths = sorted(img_paths)
@@ -61,25 +53,18 @@ for img_path in img_paths:
 
         for row in csv_reader:
             label = row[0]
+            score = float(row[1])
             color = (100, 200, 100)
+            bbox = [int(item) for item in row[2:]]
 
-            # if (detection['conf'] > conf_threshold
-            #     and label in filter_labels):
+            caption = '{} {:.2f}'.format(label, score)
+            
+            if (score > conf_threshold
+                and label in FILTER_LABELS):
 
-            # if label == 'animal': 
-            #     color = (100, 200, 100)
-            # elif label =='person':
-            #     color = (200, 100, 100)
-            # elif label =='vehicle':
-            #     color = (100, 100, 200)
-            # bbox = np.array(row[1:])
-            bbox = [int(item) for item in row[1:]]
-            # bbox = (bbox.reshape(2,2) * np.array(img_shape)).reshape(4,)
-            # bbox = bbox.astype(np.uint16)
-
-            if args.show_labels:
-                draw.labeled_box_on_image(img, bbox, label)
-            draw.box_on_image(img, bbox, color=color)
+                if args.show_labels:
+                    draw.labeled_box_on_image(img, bbox, caption)
+                draw.box_on_image(img, bbox, color=color)
         
     images.append(img)
     cv2.imshow('View', img)
