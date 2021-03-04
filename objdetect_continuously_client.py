@@ -8,6 +8,8 @@ import yaml
 from datetime import datetime
 import picamera
 
+from dencam.gui import State
+
 from scrubcam.vision import ObjectDetectionSystem
 from scrubcam.networking import ClientSocketHandler
 from scrubcam.display import Display
@@ -40,7 +42,8 @@ def main():
     camera.rotation = CAMERA_ANGLE
     camera.resolution = CAMERA_RESOLUTION
 
-    display = Display(configs, camera)
+    state = State(4)
+    display = Display(configs, camera, state)
 
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
