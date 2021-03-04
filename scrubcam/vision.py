@@ -43,7 +43,9 @@ class InferenceSystem():
                                          quotechar='"',
                                          quoting=csv.QUOTE_MINIMAL)
             for lbox in lboxes:
-                self.csv_writer.writerow([lbox['class_name'], *lbox['box']])
+                self.csv_writer.writerow([lbox['class_name'],
+                                          lbox['confidence'],
+                                          *lbox['box']])
 
     def save_current_frame(self, label, lboxes=None):
         now = datetime.now()
