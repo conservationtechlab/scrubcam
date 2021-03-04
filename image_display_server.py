@@ -11,7 +11,6 @@ from viztools.visualization import FlyingPicBox
 from viztools.visualization import init_pics, create_layout, GridDisplay
 from viztools import draw
 
-from scrubcam.display import Viewer
 from scrubcam.networking import ServerSocketHandler, create_image_dict
 
 parser = argparse.ArgumentParser()
@@ -26,10 +25,11 @@ logging.basicConfig(level=logging.INFO,
 log = logging.getLogger('main')
 
 JUMP_SCREENS = False
-NUM_COLS = 10
-NUM_ROWS = 7
-COL_WIDTH = 330
-ROW_HEIGHT = 250
+NUM_COLS = 4
+NUM_ROWS = 4
+COL_WIDTH = 700
+ROW_HEIGHT = 400
+IMAGE_WIDTH = 600
 
 
 def main():
@@ -76,10 +76,14 @@ def main():
             if image['img'] is not None:
                 if image['lboxes'] is not None:
                     box = image['lboxes'][0]['box']
-                    image['img'] = draw.box_on_image(image['img'],
-                                                     box)
- 
-                resized_image = imutils.resize(image['img'], width=320)
+                    label = image['lboxes'][0]['class_name']
+                    # 'confidence' 'class_name'
+                    image['img'] = draw.labeled_box_on_image(image['img'],
+                                                             box,
+                                                             label,
+                                                             font_size=3.0)
+
+                resized_image = imutils.resize(image['img'], width=IMAGE_WIDTH)
                 flypics.append(FlyingPicBox(resized_image,
                                             np.array([layout[spot_count][0], 0]),
                                             np.array(layout[spot_count])))
