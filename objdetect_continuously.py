@@ -25,13 +25,19 @@ CONFIG_FILE = args.config
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
-LOGGING_LEVEL = logging.INFO
-log = logs.setup_logger(LOGGING_LEVEL, '/home/ian/scrubcam.log')
-log.info('*** SCRUBCAM STARTING UP ***')
-    
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 FILTER_CLASSES = configs['FILTER_CLASSES']
+    
+LOGGING_LEVEL = logging.INFO
+log = logs.setup_logger(LOGGING_LEVEL, '/home/ian/scrubcam.log')
+log.info(f'\n{"-"*40}\n'
+         f'{"*"*9}'
+         ' SCRUBCAM STARTING UP '
+         f'{"*"*9}\n'
+         f'TARGET CLASSES: {" | ".join(FILTER_CLASSES)}\n'
+         f'Confidence threshold to save image: {RECORD_CONF_THRESHOLD}\n'
+         f'{"-"*40}')
 
 
 class Controller(BaseController):
@@ -70,8 +76,6 @@ class Recorder(BaseRecorder):
 
 
 def main():
-    log.info(f'Confidence threshold to save image: {RECORD_CONF_THRESHOLD}')
-    log.info(f'\n{"-"*40}\nTARGET CLASSES: {" | ".join(FILTER_CLASSES)}\n{"-"*40}')
 
     try:
         flags = {'stop_buttons_flag': False}
