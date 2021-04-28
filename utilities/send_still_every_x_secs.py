@@ -1,12 +1,16 @@
 #!/usr/bin/env python
+"""Captures an image from the ScrubCam's picamera and sends it to the
+server program at a fixed interval in seconds. A common use is to test
+functionality of all implicated hardware and systems without invoking
+other components such as the Coral.
 
+"""
 import time
 import logging
 import io
 import argparse
 import yaml
 
-from datetime import datetime
 import picamera
 
 from scrubcam.networking import ClientSocketHandler
