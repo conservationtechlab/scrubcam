@@ -1,5 +1,7 @@
-# grabs a single frame from the picamera runs an object detector on it
+"""Grabs camera frame, runs object detector and classification on it.
 
+"""
+import logging
 import io
 import time
 import argparse
@@ -7,7 +9,13 @@ import yaml
 
 import picamera
 
-import vision
+from scrubcam import vision
+
+logging.basicConfig(level='INFO',
+                    format='[%(levelname)s] %(message)s (%(name)s)')
+log = logging.getLogger()
+log.info("Grabs a single frame from scrubcam's picamera "
+        + "and runs an object detector on it")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -18,10 +26,9 @@ CONFIG_FILE = args.config
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
-# vision = vision.ObjectDetectionSystem(configs)
-vision = vision.ImageClassificationSystem(configs)
+detection_system = vision.ObjectDetectionSystem(configs)
+classification_system = vision.ImageClassificationSystem(configs)
 
-# Create the in-memory
 stream = io.BytesIO()
 
 with picamera.PiCamera() as camera:
@@ -33,5 +40,10 @@ with picamera.PiCamera() as camera:
         time.sleep(.1)
     camera.capture(stream, format='jpeg')
 
-vision.infer(stream)
-vision.print_report()
+log.info('Running object detection.')
+detection_system.infer(stream)
+detection_system.print_report()
+
+log.info('Running image classification.')
+classification_system.infer(stream)
+classification_system.print_report()
