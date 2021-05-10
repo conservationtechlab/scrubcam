@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+"""Utility for digitally zooming central pixels to aid camera focusing
+
+"""
 import argparse
 import time
 from threading import Thread
