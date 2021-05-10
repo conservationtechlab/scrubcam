@@ -1,5 +1,7 @@
 import os
-from setuptools import setup
+import re
+
+import setuptools
 
 
 def read(filename):
@@ -17,12 +19,12 @@ def find_version(text):
 AUTHOR = "Conservation Technology Lab at the San Diego Zoo Wildlife Alliance"
 DESC = "Code for ScrubCam: Edge-AI-enabled wildlife field camera."
 
-setup(
+setuptools.setup(
     name="scrubcam",
     description=DESC,
-    long_description=read('README.md')
+    long_description=read('README.md'),
     license="MIT",
-    version=find_version(read('scrubcam/__init__.py'),
+    version=find_version(read('scrubcam/__init__.py')),
     author=AUTHOR,
     packages=setuptools.find_packages(),
     install_required=[
