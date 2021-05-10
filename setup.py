@@ -37,6 +37,7 @@ setuptools.setup(
         'imutils',
         'pillow',
         'dencam',
+        'camml',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
