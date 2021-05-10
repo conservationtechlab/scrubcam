@@ -3,21 +3,21 @@ from setuptools import setup
 
 
 def read(filename):
-  path = os.path.join(os.path.abspath(os.path.dirname(__file__)), filename)
-  with open(path , 'r') as f:
-    return f.read()
+    path = os.path.join(os.path.abspath(os.path.dirname(__file__)), filename)
+    with open(path , 'r') as f:
+      return f.read()
 
 
 def find_version(text):
-  match = re.search(r"^__version__\s*=\s*['\"](.*)['\"]\s*$", text,
-                    re.MULTILINE)
-  return match.group(1)
+    match = re.search(r"^__version__\s*=\s*['\"](.*)['\"]\s*$", text,
+                      re.MULTILINE)
+    return match.group(1)
 
 
 AUTHOR = "Conservation Technology Lab at the San Diego Zoo Wildlife Alliance"
 DESC = "Code for ScrubCam: Edge-AI-enabled wildlife field camera."
 
-setuptools.setup(
+setup(
     name="scrubcam",
     description=DESC,
     long_description=read('README.md')
