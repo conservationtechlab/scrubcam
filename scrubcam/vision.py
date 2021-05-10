@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 import cv2
 
-from dnntools import neuralnetwork_coral as nn
+from camml import coral as nn
 
 log = logging.getLogger(__name__)
 
