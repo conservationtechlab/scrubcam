@@ -26,7 +26,7 @@ setuptools.setup(
     license="MIT",
     version=find_version(read('scrubcam/__init__.py')),
     author=AUTHOR,
-    packages=setuptools.find_packages(),
+    packages=['scrubcam'],
     install_required=[
         'pyyaml',
         'picamera',
