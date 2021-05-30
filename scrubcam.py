@@ -32,6 +32,8 @@ CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
 CAMERA_ROTATION = configs['CAMERA_ROTATION']
 FILTER_CLASSES = configs['FILTER_CLASSES']
 
+HEADLESS = configs['HEADLESS']
+
 
 def main():
     detector = ObjectDetectionSystem(configs)
@@ -42,8 +44,9 @@ def main():
     camera.rotation = CAMERA_ROTATION
     camera.resolution = CAMERA_RESOLUTION
 
-    state = State(4)
-    display = Display(configs, camera, state)
+    if not HEADLESS:
+        state = State(4)
+        display = Display(configs, camera, state)
 
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
@@ -57,7 +60,8 @@ def main():
             detector.print_report()
 
             lboxes = detector.labeled_boxes
-            display.update(lboxes)
+            if not HEADLESS:
+                display.update(lboxes)
 
             if command == 1:
                 socket_handler.send_image(stream)
