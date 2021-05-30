@@ -19,6 +19,7 @@ def create_image_dict():
     """
     return {'img': None, 'lboxes': None}
 
+
 class ServerSocketHandler(Thread):
 
     def __init__(self, address, image, stop_flag):
@@ -26,7 +27,7 @@ class ServerSocketHandler(Thread):
 
         self.image = image
         self.stop_flag = stop_flag
-        
+
         self.sock = socket.socket()
         self.sock.bind(address)
         self.sock.listen()
@@ -44,7 +45,7 @@ class ServerSocketHandler(Thread):
 
             if self.stop_flag():
                 break
-            
+
             while True:
                 # write command to connection
                 stream.write(struct.pack('<L', self.command))
@@ -59,17 +60,17 @@ class ServerSocketHandler(Thread):
                 # execute appropriate reads based off message type
                 if msg_type == 0:  # no image
                     pass
-                elif msg_type == 1: # image without box
+                elif msg_type == 1:  # image without box
                     ok = self._read_image_data(stream)
                     if not ok:
                         break
-                elif msg_type == 2: # image with boxes
+                elif msg_type == 2:  # image with boxes
                     log.info('Receiving image with boxes.')
                     ok = self._read_box(stream)
                     if not ok:
                         log.error('Trouble reading boxes')
                         break
-                    
+
                     ok = self._read_image_data(stream)
                     if not ok:
                         log.error('trouble reading image')
@@ -91,9 +92,9 @@ class ServerSocketHandler(Thread):
         if not data:
             return False
         self.image['lboxes'] = pickle.loads(data)
-        
+
         return True
-    
+
     def _read_image_data(self, stream):
         data = stream.read(struct.calcsize('<L'))
         if not data:
@@ -114,8 +115,11 @@ class ClientSocketHandler():
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
         PORT = configs['REMOTE_SERVER_PORT']
 
-        log.info('{} {}'.format(REMOTE_SERVER_IP, PORT))
-        
+        strg = 'Attempting to connect to server at: {} {}'
+        strg = strg.format(REMOTE_SERVER_IP,
+                           PORT)
+        log.info(strg)
+
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
         self.socket_stream = self.sock.makefile('rwb')
@@ -168,7 +172,7 @@ class ClientSocketHandler():
             return None
         command = struct.unpack('<L', message)[0]
         return command
-        
+
     def close(self):
         log.info('Cleaning up SocketHandler')
         self.socket_stream.close()
@@ -185,7 +189,5 @@ class ClientSocketHandler():
 #         self.connect((REMOTE_SERVER_IP, PORT))
 
 #         self.command = 'w'
-        
+
 #     def recv_command(self):
-        
-    
