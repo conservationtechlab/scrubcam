@@ -71,16 +71,18 @@ def main():
                     # send image over socket
                     # socket_handler.send_image(stream)
 
-                    top_class = lboxes[0]['class_name']
-                    if top_class in FILTER_CLASSES:
+                    detected_classes = [lbox['class_name'] for lbox in lboxes]
+
+                    if any(item in FILTER_CLASSES for item in detected_classes):
                         socket_handler.send_image_and_boxes(stream, lboxes)
+                        detector.save_current_frame(None, lboxes=lboxes)
                     else:
                         socket_handler.send_no_image()
 
-                    detector.save_current_frame(None, lboxes=lboxes)
                     with open('what_was_seen.log', 'a+') as f:
                         time_format = '%Y-%m-%d %H:%M:%S'
                         tstamp = str(datetime.now().strftime(time_format))
+                        top_class = lboxes[0]['class_name']
                         f.write('{} | {}\n'.format(tstamp,
                                                    top_class))
                 else:
