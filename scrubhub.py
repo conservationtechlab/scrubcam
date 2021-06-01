@@ -29,10 +29,12 @@ log = logging.getLogger('main')
 
 JUMP_SCREENS = False
 NUM_COLS = 4
-NUM_ROWS = 4
-COL_WIDTH = 700
-ROW_HEIGHT = 400
-IMAGE_WIDTH = 600
+NUM_ROWS = 3
+IMAGE_WIDTH = 700
+COL_WIDTH = IMAGE_WIDTH + 10
+ROW_HEIGHT = int(IMAGE_WIDTH * 9/16 + 10)
+
+CONF_THRESHOLD = .35
 
 
 def main():
@@ -61,17 +63,31 @@ def main():
     # viewer.setDaemon(True)
     # viewer.start()
 
-    spots = {'person' : 1,
-             'chair' : 2,
-             'cup' : 3,
-             'laptop' : 4,
-             'cat' : 5,
-             'elephant' : 6,
-             'zebra' : 7,
-             'horse' : 8,
-             'dog' : 9,
-             'bird' : 10,
-             'book' : 11}
+    spots = {'giraffe' : 0,
+             'person' : 1,
+             'cat' : 2,
+             'elephant' : 3,
+             'zebra' : 4,
+             'horse' : 5,
+             'dog' : 6,
+             'bird' : 7,
+             'cow' : 8,
+             'sheep' : 9,
+             'bear' : 10}
+
+    inverted = {v: k for k, v in spots.items()}
+    for spot in range(len(spots)):
+        blank = 255* np.ones((int(IMAGE_WIDTH * 9/16), IMAGE_WIDTH, 3))
+        holder = cv2.putText(blank,
+                             inverted[spot],
+                             (50, 50),
+                             cv2.FONT_HERSHEY_SIMPLEX, 
+                             1,
+                             (0, 0, 0),
+                             2,
+                             cv2.LINE_AA)
+ 
+        display_pics[spot].append(holder)
     
     try:
         while True:
@@ -90,15 +106,35 @@ def main():
 
             if image['img'] is not None:
                 if image['lboxes'] is not None:
-                    box = image['lboxes'][0]['box']
-                    label = image['lboxes'][0]['class_name']
-                    # 'confidence' 'class_name'
-                    image['img'] = draw.labeled_box_on_image(image['img'],
-                                                             box,
-                                                             label,
-                                                             font_size=3.0)
 
-                spot = spots[label]
+                    for lbox in image['lboxes']:
+                        confidence = lbox['confidence']
+                        if confidence > CONF_THRESHOLD:
+                            box = lbox['box']
+                            label = '{} {:.2f}'
+                            label = label.format(lbox['class_name'],
+                                                 confidence)
+                            image['img'] = draw.labeled_box_on_image(image['img'],
+                                                                     box,
+                                                                     label,
+                                                                     font_size=2.0)
+
+                for lbox in image['lboxes']:
+                    if lbox['class_name'] in spots.keys():
+                        top_label = lbox['class_name']
+                        break
+
+                image['img'] = cv2.putText(image['img'],
+                                           top_label,
+                                           (50, 90),
+                                           cv2.FONT_HERSHEY_SIMPLEX, 
+                                           3,
+                                           (255, 255, 255),
+                                           4,
+                                           cv2.LINE_AA)
+
+                    
+                spot = spots[top_label]
                 resized_image = imutils.resize(image['img'], width=IMAGE_WIDTH)
                 flypics.append(FlyingPicBox(resized_image,
                                             np.array([layout[spot][0], 0]),
