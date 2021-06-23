@@ -27,7 +27,7 @@ setuptools.setup(
     version=find_version(read('scrubcam/__init__.py')),
     author=AUTHOR,
     packages=['scrubcam'],
-    install_required=[
+    install_requires=[
         'pyyaml',
         'picamera',
         'netifaces',
