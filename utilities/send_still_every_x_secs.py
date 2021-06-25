@@ -9,15 +9,14 @@ import time
 import logging
 import io
 import argparse
-import yaml
 
+import yaml
 import picamera
 
 from scrubcam.networking import ClientSocketHandler
 
 logging.basicConfig(level='INFO',
                     format='[%(levelname)s] %(message)s')
-log = logging
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config_filename')
@@ -29,16 +28,12 @@ DELAY_BETWEEN_SENDS = int(args.delay_between_sends)
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
-RECORD = configs['RECORD']
-CAMERA_RESOLUTION = configs['CAMERA_RESOLUTION']
-CAMERA_ANGLE = configs['CAMERA_ANGLE']
-
 socket_handler = ClientSocketHandler(configs)
 stream = io.BytesIO()
 
 camera = picamera.PiCamera()
-camera.rotation = CAMERA_ANGLE
-camera.resolution = CAMERA_RESOLUTION
+camera.resolution = configs['CAMERA_RESOLUTION']
+camera.rotation = configs['CAMERA_ROTATION']
 
 
 def main():
@@ -52,15 +47,25 @@ def main():
             command = socket_handler.recv_command()
             if command is None:
                 break
-            log.info('Command: {}'.format(command))
+            logging.info('Command: {}'.format(command))
 
             time.sleep(DELAY_BETWEEN_SENDS)
-            socket_handler.send_image(stream)
+
+            if command == 1:
+                socket_handler.send_image(stream)
+            else:
+                # create dummy lboxes
+                lbox = {'class_name': 'person',
+                        'confidence': 1.0,
+                        'box': (0, 0, 10, 10)}
+                lboxes = [lbox]
+
+                socket_handler.send_image_and_boxes(stream, lboxes)
 
             stream.seek(0)
             stream.truncate()
     except KeyboardInterrupt:
-        log.warning('KeyboardInterrupt')
+        logging.warning('KeyboardInterrupt')
         socket_handler.close()
 
 
