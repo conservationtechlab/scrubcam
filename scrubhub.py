@@ -12,7 +12,7 @@ import imutils
 
 from viztools.visualization import FlyingPicBox
 from viztools.visualization import init_pics, create_layout, GridDisplay
-from viztools import draw
+from viztools.draw import labeled_box_on_image
 
 from scrubcam.networking import ServerSocketHandler, create_image_dict
 
@@ -50,7 +50,6 @@ def main():
     display = GridDisplay(window, JUMP_SCREENS, layout)
     display_pics = init_pics(layout)
     spot = 0
-    spot_count = 0
 
     image = create_image_dict()
     threads_stop = False
@@ -63,32 +62,32 @@ def main():
     # viewer.setDaemon(True)
     # viewer.start()
 
-    spots = {'giraffe' : 0,
-             'person' : 1,
-             'cat' : 2,
-             'elephant' : 3,
-             'zebra' : 4,
-             'horse' : 5,
-             'dog' : 6,
-             'bird' : 7,
-             'cow' : 8,
-             'sheep' : 9,
-             'bear' : 10}
+    spots = {'giraffe': 0,
+             'person': 1,
+             'cat': 2,
+             'elephant': 3,
+             'zebra': 4,
+             'horse': 5,
+             'dog': 6,
+             'bird': 7,
+             'cow': 8,
+             'sheep': 9,
+             'bear': 10}
 
     inverted = {v: k for k, v in spots.items()}
     for spot in range(len(spots)):
-        blank = 255* np.ones((int(IMAGE_WIDTH * 9/16), IMAGE_WIDTH, 3))
+        blank = 255 * np.ones((int(IMAGE_WIDTH * 9/16), IMAGE_WIDTH, 3))
         holder = cv2.putText(blank,
                              inverted[spot],
                              (50, 50),
-                             cv2.FONT_HERSHEY_SIMPLEX, 
+                             cv2.FONT_HERSHEY_SIMPLEX,
                              1,
                              (0, 0, 0),
                              2,
                              cv2.LINE_AA)
- 
+
         display_pics[spot].append(holder)
-    
+
     try:
         while True:
             display.refresh_canvas()
@@ -114,10 +113,10 @@ def main():
                             label = '{} {:.2f}'
                             label = label.format(lbox['class_name'],
                                                  confidence)
-                            image['img'] = draw.labeled_box_on_image(image['img'],
-                                                                     box,
-                                                                     label,
-                                                                     font_size=2.0)
+                            image['img'] = labeled_box_on_image(image['img'],
+                                                                box,
+                                                                label,
+                                                                font_size=2.0)
 
                 for lbox in image['lboxes']:
                     if lbox['class_name'] in spots.keys():
@@ -127,13 +126,12 @@ def main():
                 image['img'] = cv2.putText(image['img'],
                                            top_label,
                                            (50, 90),
-                                           cv2.FONT_HERSHEY_SIMPLEX, 
+                                           cv2.FONT_HERSHEY_SIMPLEX,
                                            3,
                                            (255, 255, 255),
                                            4,
                                            cv2.LINE_AA)
 
-                    
                 spot = spots[top_label]
                 resized_image = imutils.resize(image['img'], width=IMAGE_WIDTH)
                 flypics.append(FlyingPicBox(resized_image,
