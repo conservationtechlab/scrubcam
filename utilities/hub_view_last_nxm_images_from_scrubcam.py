@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+"""Simple display of received ScrubCam images
+
+Can be used view every image coming in from ScrubCam (as opposed to
+the main ScrubHub program which has some thresholding and which sorts
+images on grid by class) for debugging and other testing.  
+
+Some of the functionality is inherited from an older project which
+does not mesh with this one so that after the grid is filled the
+behaviour is a little "odd" in this context (creating a timelapse at
+each grid element).  Hasn't yet been worth addressing this.
+
+"""
 import logging
 import argparse
 import time
