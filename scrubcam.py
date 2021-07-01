@@ -1,5 +1,17 @@
 #!/usr/bin/env python
+"""Code for ScrubCam field device
 
+The code that runs on the Scrubcam field device.  Gets configuration
+information from a YAML file provided as a command line argument.
+There is an example configuration file at:
+
+cfgs/config.yaml.example
+
+To run:
+
+./scrubcam.py cfgs/YOUR_CONFIGURATION_FILE.yaml
+
+"""
 import logging
 import io
 import argparse
@@ -73,7 +85,7 @@ def main():
 
                     detected_classes = [lbox['class_name'] for lbox in lboxes]
 
-                    if any(item in FILTER_CLASSES for item in detected_classes):
+                    if any(itm in FILTER_CLASSES for itm in detected_classes):
                         socket_handler.send_image_and_boxes(stream, lboxes)
                         detector.save_current_frame(None, lboxes=lboxes)
                     else:
