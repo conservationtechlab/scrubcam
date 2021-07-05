@@ -123,6 +123,7 @@ class ClientSocketHandler():
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
         self.socket_stream = self.sock.makefile('rwb')
+        self.filter_classes = configs['FILTER_CLASSES']
 
     def send_no_image(self):
         self.socket_stream.write(struct.pack('<L', 0))
@@ -142,7 +143,15 @@ class ClientSocketHandler():
     #     self._send_image_data(image_stream)
 
     def send_image_and_boxes(self, image_stream, boxes):
-        self.socket_stream.write(struct.pack('<L', 2))
+        # creating header
+        header = "IMAGE"
+        header_bytes = header.encode()
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
         self.socket_stream.flush()
 
         self._send_object(boxes)
@@ -172,6 +181,31 @@ class ClientSocketHandler():
             return None
         command = struct.unpack('<L', message)[0]
         return command
+
+    def send_image_classes(self):
+        # creating header
+        header = "CLASSES"
+        header_bytes = header.encode()
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # convert classes list into a bytestream
+        log.debug(self.filter_classes)
+        classes_bytes = pickle.dumps(self.filter_classes)
+
+        # send size of image classes list
+        self.socket_stream.write(struct.pack('<L', len(classes_bytes)))
+        self.socket_stream.flush()
+        # send image classes list
+        self.socket_stream.write(classes_bytes)
+        self.socket_stream.flush()
+
+        log.info('Classes sent to Scrubdash')
 
     def close(self):
         log.info('Cleaning up SocketHandler')
