@@ -44,6 +44,8 @@ def main():
     camera.rotation = CAMERA_ROTATION
     camera.resolution = CAMERA_RESOLUTION
 
+    socket_handler.send_image_classes()
+
     if not HEADLESS:
         state = State(4)
         display = Display(configs, camera, state)
@@ -51,10 +53,11 @@ def main():
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
 
-            command = socket_handler.recv_command()
-            if command is None:
-                break
-            log.info('Command from server is {}'.format(command))
+            command = 0
+            # command = socket_handler.recv_command()
+            # if command is None:
+            #     break
+            # log.info('Command from server is {}'.format(command))
 
             detector.infer(stream)
             detector.print_report()
@@ -76,8 +79,9 @@ def main():
                     if any(item in FILTER_CLASSES for item in detected_classes):
                         socket_handler.send_image_and_boxes(stream, lboxes)
                         detector.save_current_frame(None, lboxes=lboxes)
-                    else:
-                        socket_handler.send_no_image()
+                        print('image sent!')
+                    # else:
+                    #     socket_handler.send_no_image()
 
                     with open('what_was_seen.log', 'a+') as f:
                         time_format = '%Y-%m-%d %H:%M:%S'
@@ -85,11 +89,11 @@ def main():
                         top_class = lboxes[0]['class_name']
                         f.write('{} | {}\n'.format(tstamp,
                                                    top_class))
-                else:
-                    socket_handler.send_no_image()
+                # else:
+                #     socket_handler.send_no_image()
 
-            else:
-                socket_handler.send_no_image()
+            # else:
+            #     socket_handler.send_no_image()
 
             stream.seek(0)
             stream.truncate()
