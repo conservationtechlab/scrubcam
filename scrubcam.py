@@ -53,12 +53,6 @@ def main():
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
 
-            command = 0
-            # command = socket_handler.recv_command()
-            # if command is None:
-            #     break
-            # log.info('Command from server is {}'.format(command))
-
             detector.infer(stream)
             detector.print_report()
 
@@ -66,22 +60,14 @@ def main():
             if not HEADLESS:
                 display.update(lboxes)
 
-            if command == 1:
-                socket_handler.send_image(stream)
-
-            elif len(lboxes) > 0:
+            if len(lboxes) > 0:
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
-                    # send image over socket
-                    # socket_handler.send_image(stream)
 
                     detected_classes = [lbox['class_name'] for lbox in lboxes]
-
                     if any(item in FILTER_CLASSES for item in detected_classes):
                         socket_handler.send_image_and_boxes(stream, lboxes)
                         detector.save_current_frame(None, lboxes=lboxes)
-                        print('image sent!')
-                    # else:
-                    #     socket_handler.send_no_image()
+                        log.debug('Image sent')
 
                     with open('what_was_seen.log', 'a+') as f:
                         time_format = '%Y-%m-%d %H:%M:%S'
@@ -89,11 +75,6 @@ def main():
                         top_class = lboxes[0]['class_name']
                         f.write('{} | {}\n'.format(tstamp,
                                                    top_class))
-                # else:
-                #     socket_handler.send_no_image()
-
-            # else:
-            #     socket_handler.send_no_image()
 
             stream.seek(0)
             stream.truncate()
