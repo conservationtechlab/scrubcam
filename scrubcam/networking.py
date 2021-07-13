@@ -123,7 +123,6 @@ class ClientSocketHandler():
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
         self.socket_stream = self.sock.makefile('rwb')
-        self.filter_classes = configs['FILTER_CLASSES']
 
     def send_no_image(self):
         self.socket_stream.write(struct.pack('<L', 0))
@@ -182,7 +181,7 @@ class ClientSocketHandler():
         command = struct.unpack('<L', message)[0]
         return command
 
-    def send_image_classes(self):
+    def send_image_classes(self, filter_classes):
         # creating header
         header = "CLASSES"
         header_bytes = header.encode()
@@ -195,8 +194,8 @@ class ClientSocketHandler():
         self.socket_stream.flush()
 
         # convert classes list into a bytestream
-        log.debug(self.filter_classes)
-        classes_bytes = pickle.dumps(self.filter_classes)
+        log.debug(filter_classes)
+        classes_bytes = pickle.dumps(filter_classes)
 
         # send size of image classes list
         self.socket_stream.write(struct.pack('<L', len(classes_bytes)))

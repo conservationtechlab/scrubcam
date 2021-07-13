@@ -44,7 +44,7 @@ def main():
     camera.rotation = CAMERA_ROTATION
     camera.resolution = CAMERA_RESOLUTION
 
-    socket_handler.send_image_classes()
+    socket_handler.send_image_classes(FILTER_CLASSES)
 
     if not HEADLESS:
         state = State(4)
