@@ -45,18 +45,23 @@ CAMERA_ROTATION = configs['CAMERA_ROTATION']
 FILTER_CLASSES = configs['FILTER_CLASSES']
 
 HEADLESS = configs['HEADLESS']
+SEND_IMAGES = configs['SEND_IMAGES']
 
 
 def main():
     detector = ObjectDetectionSystem(configs)
-    socket_handler = ClientSocketHandler(configs)
     stream = io.BytesIO()
 
     camera = picamera.PiCamera()
     camera.rotation = CAMERA_ROTATION
     camera.resolution = CAMERA_RESOLUTION
 
-    socket_handler.send_image_classes(FILTER_CLASSES)
+    if SEND_IMAGES:
+        log.info('Connecting to server enabled')
+        socket_handler = ClientSocketHandler(configs)
+        socket_handler.send_image_classes(FILTER_CLASSES)
+    else:
+        log.info('Connecting to server ***DISABLED***\n\n')
 
     if not HEADLESS:
         state = State(4)
@@ -76,7 +81,8 @@ def main():
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
                     detected_classes = [lbox['class_name'] for lbox in lboxes]
                     if any(itm in FILTER_CLASSES for itm in detected_classes):
-                        socket_handler.send_image_and_boxes(stream, lboxes)
+                        if SEND_IMAGES:
+                            socket_handler.send_image_and_boxes(stream, lboxes)
                         detector.save_current_frame(None, lboxes=lboxes)
                         log.debug('Image sent')
 
@@ -91,7 +97,8 @@ def main():
             stream.truncate()
     except KeyboardInterrupt:
         log.warning('KeyboardInterrupt')
-        socket_handler.close()
+        if SEND_IMAGES:
+            socket_handler.close()
 
 
 if __name__ == "__main__":
