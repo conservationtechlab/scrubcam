@@ -8,11 +8,6 @@ import time
 
 import cv2
 import numpy as np
-import imutils
-
-from viztools.visualization import FlyingPicBox
-from viztools.visualization import init_pics, create_layout, GridDisplay
-from viztools.draw import labeled_box_on_image
 
 from scrubcam.networking import ServerSocketHandler, create_image_dict
 
@@ -38,17 +33,7 @@ CONF_THRESHOLD = .35
 
 
 def main():
-    flypics = []
-    layout = create_layout(NUM_ROWS,
-                           NUM_COLS,
-                           COL_WIDTH,
-                           ROW_HEIGHT,
-                           upside_down=False)
-
     print('Grid: ' + str(NUM_COLS) + 'x' + str(NUM_ROWS))
-    window = 'Viewer'
-    display = GridDisplay(window, JUMP_SCREENS, layout)
-    display_pics = init_pics(layout)
     spot = 0
 
     image = create_image_dict()
@@ -86,19 +71,11 @@ def main():
                              2,
                              cv2.LINE_AA)
 
-        display_pics[spot].append(holder)
-
+    key = None
     try:
         while True:
-            display.refresh_canvas()
-
-            for flypic in flypics:
-                flypic.update()
-                flypic.display(display.canvas)
-            if len(flypics) > 10:
-                flypics = flypics[1:]
-
-            key = display.draw(display_pics)
+            # need to implement a CLI read of key since this used to
+            # be handle via CV GUI run from viztools elements
             if key == ord('q'):
                 threads_stop = True
                 break
@@ -113,10 +90,6 @@ def main():
                             label = '{} {:.2f}'
                             label = label.format(lbox['class_name'],
                                                  confidence)
-                            image['img'] = labeled_box_on_image(image['img'],
-                                                                box,
-                                                                label,
-                                                                font_size=2.0)
 
                 for lbox in image['lboxes']:
                     if lbox['class_name'] in spots.keys():
@@ -133,29 +106,8 @@ def main():
                                            cv2.LINE_AA)
 
                 spot = spots[top_label]
-                resized_image = imutils.resize(image['img'], width=IMAGE_WIDTH)
-                flypics.append(FlyingPicBox(resized_image,
-                                            np.array([layout[spot][0], 0]),
-                                            np.array(layout[spot])))
-
-                if display_pics[spot]:
-                    display_pics[spot].pop()
-                display_pics[spot].append(resized_image)
-                # spot += 1
-                # if spot >= len(layout):
-                #     spot = 0
-
-                # spot = spots[label]
-                # display_pics[spot].append(resized_image)
 
                 image['img'] = None
-
-                # cv2.imshow(window,
-                #            image['img'])
-                # key = cv2.waitKey(30)
-                # if key == ord('q'):
-                #     threads_stop = True
-                #     break
 
         cv2.destroyAllWindows()
 
