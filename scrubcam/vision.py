@@ -70,8 +70,10 @@ class ImageClassificationSystem(InferenceSystem):
 
     def __init__(self, configs):
         super().__init__(configs)
-        self.MODEL = os.path.join(self.MODEL_PATH, configs['MODEL_CONFIG_FILE'])
-        CLASSES_FILE = os.path.join(self.MODEL_PATH, configs['CLASS_NAMES_FILE'])
+        self.MODEL = os.path.join(self.MODEL_PATH,
+                                  configs['MODEL_CONFIG_FILE'])
+        CLASSES_FILE = os.path.join(self.MODEL_PATH,
+                                    configs['CLASS_NAMES_FILE'])
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
         # prepare neural network
         self.network = nn.ImageClassifierHandler(self.MODEL)
@@ -88,8 +90,9 @@ class ImageClassificationSystem(InferenceSystem):
     def print_report(self):
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
-            log.info('***{}*** is classification (Top 1) with score: {}'.format(label,
-                                                                                score))
+            strg = '***{}*** is classification (Top 1) with score: {}'
+            log.info(strg.format(label,
+                                 score))
         else:
             log.info('Inference resulted in no class label.')
 
@@ -138,17 +141,16 @@ class ObjectDetectionSystem(InferenceSystem):
         return self.OBJ_CLASSES[lbox['class_id']]
 
     def print_report(self, max_boxes=None):
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         if self.labeled_boxes:
             if max_boxes is None:
                 max_boxes = len(self.labeled_boxes)
             for i, box in enumerate(self.labeled_boxes[:max_boxes]):
                 detected_class = self.class_of_box(box)
                 score = 100 * box['confidence']
-                log.info('Box {}: {}. With confidence {:.1f}'.format(i,
-                                                                     detected_class,
-                                                                     score))
+                strng = 'Box {}: {}. With confidence {:.1f}'
+                log.info(strng.format(i,
+                                      detected_class,
+                                      score))
         else:
             log.debug('No boxes detected')
 
