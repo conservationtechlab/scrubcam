@@ -16,7 +16,62 @@ variants--a charger controller with external solar panels.
 
 # Setup
 
-This section deserves some attention :-)
+### Install virtualenvwrapper
+
+     pip3 install virtualenvwrapper
+
+### Create a .virtualenvs folder to hold all virtual environments
+
+     mkdir ~/.virtualenvs
+
+### Add python path and source to ~/.bashrc file
+
+     export WORKON_HOME=$HOME/.virtualenvs
+     export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+     export VIRTUALENVWRAPPER_VIRTUALENV=/home/pi/.local/bin/virtualenv
+     source ~/.local/bin/virtualenvwrapper.sh
+
+### Create virutal environment
+
+     mkvirtualenv scrubcam
+
+### Activate virtual environment
+
+     workon scrubcam
+
+### Clone the scrubcam repo
+
+     git clone https://github.com/icr-ctl/scrubcam.git
+
+### Get apt-get updates
+
+     sudo apt-get update
+
+### Install scrubcam dependencies
+
+     cd ~/scrubcam
+     ./install.sh
+
+### Set up edgetpu dependencies
+     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+     echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+     sudo apt-get update
+     sudo apt-get install libedgetpu1-std
+     sudo apt-get install python3-edgetpu
+
+     # Reboot the pi
+     sudo reboot now
+     # Then create symlink into our virtualenv
+     dpkg -L python3-edgetpu
+
+     # Find a line like "/usr/lib/python3/dist-packages/edgetpu"
+     # We will symlink this into our virtualenv
+     cd ~/.virtualenvs/[virtualenv_name]/lib/python3.7/site-packages/
+     ln -s /usr/lib/python3/dist-packages/edgetpu/ edgetpu
+     # Then install the examples
+     sudo apt-get install edgetpu-examples
+     sudo chmod a+w /usr/share/edgetpu/examples
 
 # Usage
 
