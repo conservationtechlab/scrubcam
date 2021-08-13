@@ -15,14 +15,20 @@ BACKLIGHT_PIN = 18
 parser = argparse.ArgumentParser()
 parser.add_argument('zoom_factor',
                     help='Factor to zoom in by')
+parser.add_argument('-r',
+                    '--rotation',
+                    default=90,
+                    help='Camera rotation angle')
 args = parser.parse_args()
 ZOOM_FACTOR = args.zoom_factor
+ROTATION = args.rotation
 
 
 class MainApp(Thread):
 
     def run(self):
         self.camera = PiCamera()
+        self.camera.rotation = ROTATION
         self._gpio_setup()
 
         self.camera.start_preview()
