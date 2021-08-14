@@ -112,6 +112,7 @@ class ServerSocketHandler(Thread):
 class ClientSocketHandler():
 
     def __init__(self, configs):
+        self.CONFIG_FILE = configs
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
         PORT = configs['REMOTE_SERVER_PORT']
 
@@ -144,7 +145,7 @@ class ClientSocketHandler():
     def send_image_and_boxes(self, image_stream, boxes):
         # creating header
         header = "IMAGE"
-        header_bytes = header.encode()
+        header_bytes = header.encode('utf-8')
 
         # send header size
         self.socket_stream.write(struct.pack('<L', len(header_bytes)))
@@ -184,7 +185,7 @@ class ClientSocketHandler():
     def send_image_classes(self, filter_classes):
         # creating header
         header = "CLASSES"
-        header_bytes = header.encode()
+        header_bytes = header.encode('utf-8')
 
         # send header size
         self.socket_stream.write(struct.pack('<L', len(header_bytes)))
@@ -205,6 +206,135 @@ class ClientSocketHandler():
         self.socket_stream.flush()
 
         log.info('Classes sent to Scrubdash')
+
+    def send_hostname(self):
+        # creating header
+        header = "HOSTNAME"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # get hostname
+        hostname = socket.gethostname()
+        hostname_bytes = hostname.encode('utf-8')
+
+        # send size of image classes list
+        self.socket_stream.write(struct.pack('<L', len(hostname_bytes)))
+        self.socket_stream.flush()
+        # send image classes list
+        self.socket_stream.write(hostname_bytes)
+        self.socket_stream.flush()
+
+    def send_continue_run(self, continue_run):
+        # creating header
+        header = "CONTINUE_RUN"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # convert continue run flag into a str so it can be encoded
+        continue_run = "True" if continue_run else "False" 
+        # convert the str representation into a bytestream
+        continue_bytes = continue_run.encode('utf-8')
+
+        # send size of image classes list
+        self.socket_stream.write(struct.pack('<L', len(continue_bytes)))
+        self.socket_stream.flush()
+        # send image classes list
+        self.socket_stream.write(continue_bytes)
+        self.socket_stream.flush()        
+
+    def send_alert_classes(self, configs):
+        # creating header
+        header = "ALERT_CLASSES"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # get alert classes list
+        alert_classes = configs['ALERT_CLASSES']
+
+        # convert alert classes list into a bytestream
+        alert_bytes = pickle.dumps(alert_classes)
+
+        # send size of alert classes list
+        self.socket_stream.write(struct.pack('<L', len(alert_bytes)))
+        self.socket_stream.flush()
+        # send alert classes list
+        self.socket_stream.write(alert_bytes)
+        self.socket_stream.flush()
+
+    def send_cooldown_time(self, configs):
+        # creating header
+        header = "COOLDOWN_TIME"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # get cooldown time
+        cooldown_time = configs['COOLDOWN_TIME']
+        # convert cooldown time into a str so it can be encoded
+        cooldown_time = str(cooldown_time)
+        # convert the str representation into a bytestream
+        cooldown_bytes = cooldown_time.encode('utf-8')
+
+        # send size of image classes list
+        self.socket_stream.write(struct.pack('<L', len(cooldown_bytes)))
+        self.socket_stream.flush()
+        # send image classes list
+        self.socket_stream.write(cooldown_bytes)
+        self.socket_stream.flush()
+
+    def send_host_configs(self, filter_classes, continue_run):
+        # creating header to alert asyncio server of config messages
+        header = "CONFIG"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # sending rest of configuration settings
+        self.send_hostname()
+        self.send_continue_run(continue_run)
+        self.send_image_classes(filter_classes)
+        self.send_alert_classes(self.CONFIG_FILE)
+        self.send_cooldown_time(self.CONFIG_FILE)
+
+        # creating header to alert asyncio server of finished configuration
+        header = "DONE"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
 
     def close(self):
         log.info('Cleaning up SocketHandler')

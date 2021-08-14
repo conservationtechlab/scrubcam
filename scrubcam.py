@@ -32,8 +32,10 @@ log = logging.getLogger('main')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config_filename')
+parser.add_argument('-c', '--continue', dest='cont', action='store_true')
 args = parser.parse_args()
 CONFIG_FILE = args.config_filename
+CONTINUE_RUN = args.cont
 
 with open(CONFIG_FILE) as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
@@ -59,7 +61,7 @@ def main():
     if SEND_IMAGES:
         log.info('Connecting to server enabled')
         socket_handler = ClientSocketHandler(configs)
-        socket_handler.send_image_classes(FILTER_CLASSES)
+        socket_handler.send_host_configs(FILTER_CLASSES, CONTINUE_RUN)
     else:
         log.info('Connecting to server ***DISABLED***\n\n')
 
