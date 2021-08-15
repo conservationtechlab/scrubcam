@@ -4,7 +4,8 @@
 Takes a path to a folder of images and csvs and displays all the
 images from the associated run with boxes drawn upon them. Optionally
 assembles these images into a video (particularly useful if the
-original images began as an image sequence exported from a video.
+original images began as an image sequence exported from a video).
+
 """
 import os
 import csv
@@ -55,7 +56,9 @@ for img_path in img_paths:
     img = cv2.imread(img_path)
     img_shape = img.shape[:2][::-1]
 
-    csv_path = os.path.splitext(img_path)[0].split('_')[0] + '.csv'
+    (filepath, filename) = os.path.split(img_path)
+    csvfile = os.path.splitext(filename)[0].split('_')[0] + '.csv'
+    csv_path = os.path.join(filepath, csvfile)
     with open(csv_path) as f:
         csv_reader = csv.reader(f, delimiter=',')
 
