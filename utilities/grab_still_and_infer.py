@@ -1,4 +1,8 @@
-"""Grabs camera frame, runs object detector and classification on it.
+"""Grabs camera frame, runs both detection and classification on it.
+
+Script to quickly check functioning of vision system elements of the
+scrubcam package and also see and evaluate output from object detector
+models and image classification models.
 
 """
 import logging
@@ -14,8 +18,8 @@ from scrubcam import vision
 logging.basicConfig(level='INFO',
                     format='[%(levelname)s] %(message)s (%(name)s)')
 log = logging.getLogger()
-log.info("Grabs a single frame from scrubcam's picamera "
-        + "and runs an object detector on it")
+log.info("This script grabs a single frame from scrubcam's picamera "
+         + "and runs a detector and a classifer on it")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('config',
@@ -32,7 +36,7 @@ classification_system = vision.ImageClassificationSystem(configs)
 stream = io.BytesIO()
 
 with picamera.PiCamera() as camera:
-    camera.rotation = configs['CAMERA_ANGLE']
+    camera.rotation = configs['CAMERA_ROTATION']
     if configs['PREVIEW_ON']:
         camera.start_preview()
         time.sleep(2)
@@ -40,10 +44,10 @@ with picamera.PiCamera() as camera:
         time.sleep(.1)
     camera.capture(stream, format='jpeg')
 
-log.info('Running object detection.')
+log.info('***RUNNING OBJECT DETECTION***')
 detection_system.infer(stream)
 detection_system.print_report()
 
-log.info('Running image classification.')
+log.info('***RUNNING IMAGE CLASSIFICATION***')
 classification_system.infer(stream)
 classification_system.print_report()
