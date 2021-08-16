@@ -1,5 +1,14 @@
 #!/usr/bin/env python
+"""Run object detection continuously on frames from picamera
 
+Runs object detection continuously on frames captured from the
+picamera and displays resultant boxes into image preview on scrubcam's
+screen. Gets its GUI from Dencam project, including the multi-page
+button controlled interface some of which doesn't really translate
+well to the differences between Scrubcam and Dencam and that needs
+addressing.
+
+"""
 import time
 import logging
 import io
@@ -28,7 +37,7 @@ with open(CONFIG_FILE) as f:
 RECORD = configs['RECORD']
 RECORD_CONF_THRESHOLD = configs['RECORD_CONF_THRESHOLD']
 FILTER_CLASSES = configs['FILTER_CLASSES']
-    
+
 LOGGING_LEVEL = logging.INFO
 log = logs.setup_logger(LOGGING_LEVEL, '/home/ian/scrubcam.log')
 log.info(f'\n{"-"*40}\n'
@@ -112,14 +121,14 @@ def main():
             display.update(lboxes)
 
             if len(lboxes) > 0:
-                class_names = [lbox['class_name'] for lbox in lboxes]
-                if (any(item in FILTER_CLASSES for item in class_names)
-                    and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD):
-                    log.info('A box labeled w/ target class '
-                             + 'and over thresh detected.')
-                    if (recorder.recording):
-                        detector.save_current_frame(None, lboxes=lboxes)
-                        recorder.update(lboxes)
+                if lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
+                    class_names = [lbox['class_name'] for lbox in lboxes]
+                    if any(item in FILTER_CLASSES for item in class_names):
+                        log.info('A box labeled w/ target class '
+                                 + 'and over thresh detected.')
+                        if (recorder.recording):
+                            detector.save_current_frame(None, lboxes=lboxes)
+                            recorder.update(lboxes)
 
             # reset the stream for the next capture
             stream.seek(0)
