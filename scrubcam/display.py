@@ -1,3 +1,10 @@
+"""Elements for displaying to Scrubcam screen
+
+Contains functions and classes involved with displaying to the PiTFT
+screen attached to the Pi 4.
+
+"""
+
 import logging
 
 from PIL import Image, ImageDraw, ImageFont
@@ -6,6 +13,14 @@ log = logging.getLogger(__name__)
 
 
 class Display():
+    """Handles drawing labelled boxes to output frame
+    
+    May need to be renamed as true display mechanics are inherited
+    from DenCam and this class only really focuses on the box-drawing.
+    Moreover, this is currently not used properly in scrubcam.py but
+    only in objdetect_continuosly.py.
+
+    """
 
     def __init__(self, configs, camera, state):
         self.resolution = configs['CAMERA_RESOLUTION']
