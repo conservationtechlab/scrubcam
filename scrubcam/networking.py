@@ -1,5 +1,6 @@
 import logging
 import io
+import time
 import socket
 import struct
 import pickle
@@ -124,6 +125,7 @@ class ClientSocketHandler():
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
         self.socket_stream = self.sock.makefile('rwb')
+        self.LAST_ALERT_TIME = None
 
     def send_no_image(self):
         self.socket_stream.write(struct.pack('<L', 0))
@@ -254,57 +256,6 @@ class ClientSocketHandler():
         self.socket_stream.write(continue_bytes)
         self.socket_stream.flush()        
 
-    def send_alert_classes(self, configs):
-        # creating header
-        header = "ALERT_CLASSES"
-        header_bytes = header.encode('utf-8')
-
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # get alert classes list
-        alert_classes = configs['ALERT_CLASSES']
-
-        # convert alert classes list into a bytestream
-        alert_bytes = pickle.dumps(alert_classes)
-
-        # send size of alert classes list
-        self.socket_stream.write(struct.pack('<L', len(alert_bytes)))
-        self.socket_stream.flush()
-        # send alert classes list
-        self.socket_stream.write(alert_bytes)
-        self.socket_stream.flush()
-
-    def send_cooldown_time(self, configs):
-        # creating header
-        header = "COOLDOWN_TIME"
-        header_bytes = header.encode('utf-8')
-
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # get cooldown time
-        cooldown_time = configs['COOLDOWN_TIME']
-        # convert cooldown time into a str so it can be encoded
-        cooldown_time = str(cooldown_time)
-        # convert the str representation into a bytestream
-        cooldown_bytes = cooldown_time.encode('utf-8')
-
-        # send size of image classes list
-        self.socket_stream.write(struct.pack('<L', len(cooldown_bytes)))
-        self.socket_stream.flush()
-        # send image classes list
-        self.socket_stream.write(cooldown_bytes)
-        self.socket_stream.flush()
-
     def send_host_configs(self, filter_classes, continue_run):
         # creating header to alert asyncio server of config messages
         header = "CONFIG"
@@ -321,8 +272,6 @@ class ClientSocketHandler():
         self.send_hostname()
         self.send_continue_run(continue_run)
         self.send_image_classes(filter_classes)
-        self.send_alert_classes(self.CONFIG_FILE)
-        self.send_cooldown_time(self.CONFIG_FILE)
 
         # creating header to alert asyncio server of finished configuration
         header = "DONE"
@@ -335,6 +284,51 @@ class ClientSocketHandler():
         self.socket_stream.write(header_bytes)
         self.socket_stream.flush()
 
+    def _send_heartbeat(self, timestamp):
+        # creating header
+        header = "CONNECTION"
+        header_bytes = header.encode('utf-8')
+
+        # send header size
+        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
+        self.socket_stream.flush()
+        # send header bytes
+        self.socket_stream.write(header_bytes)
+        self.socket_stream.flush()
+
+        # convert float timestamp into an int and then conver to a str
+        # so it can be encoded
+        timestamp = str(int(timestamp))
+        # convert the str representation into a bytestream
+        timestamp_bytes = timestamp.encode('utf-8')
+
+        # send size of image classes list
+        self.socket_stream.write(struct.pack('<L', len(timestamp_bytes)))
+        self.socket_stream.flush()
+        # send image classes list
+        self.socket_stream.write(timestamp_bytes)
+        self.socket_stream.flush()    
+
+    def send_heartbeat_every_15s(self):
+        now = time.time()
+
+        # check if cooldown time has elapsed since most recent alert
+        if self.LAST_ALERT_TIME is None:
+            # This is the first heartbeat being sent
+            cooldown_elapsed = True
+        else:
+            # get current time and check if cooldown time has elapsed
+            time_diff = now - self.LAST_ALERT_TIME
+
+            if time_diff >= 15:
+                cooldown_elapsed = True
+            else:
+                cooldown_elapsed = False
+
+        # send heartbeat if cooldown time has elapsed
+        if cooldown_elapsed:
+            self._send_heartbeat(now)
+            self.LAST_ALERT_TIME = now
 
     def close(self):
         log.info('Cleaning up SocketHandler')

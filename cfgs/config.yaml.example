@@ -21,10 +21,6 @@ PREVIEW_ON: true
 # SCREEN CONFIGURATIONS
 DISPLAY_RESOLUTION: [640, 480]
 
-# NOTIFICATION CONFIGURATIONS
-ALERT_CLASSES: [person]
-COOLDOWN_TIME: 60 # seconds
-
 # AI CONFIGURATIONS
 # bird, person, giraffe, cup, cat, dog, horse, sheep, cow, elephant, bear, zebra
 # TRACKED_CLASS: [giraffe, person]

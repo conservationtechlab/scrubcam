@@ -71,7 +71,7 @@ def main():
 
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
-
+            socket_handler.send_heartbeat_every_15s()            
             detector.infer(stream)
             detector.print_report()
 
