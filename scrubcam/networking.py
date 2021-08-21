@@ -145,18 +145,11 @@ class ClientSocketHandler():
     #     self._send_image_data(image_stream)
 
     def send_image_and_boxes(self, image_stream, boxes):
-        # creating header
+        # send header
         header = "IMAGE"
-        header_bytes = header.encode('utf-8')
-
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        self._send_object(boxes)
+        self._send_non_image_data(header)
+        # send lboxes and image
+        self._send_non_image_data(boxes)
         self._send_image_data(image_stream)
 
     def _send_image_data(self, image_stream):
@@ -169,11 +162,14 @@ class ClientSocketHandler():
         self.socket_stream.write(image_stream.read())
         self.socket_stream.flush()
 
-    def _send_object(self, a_object):
+    def _send_non_image_data(self, a_object):
         data = pickle.dumps(a_object)
         size = len(data)
+
+        # send data size
         self.socket_stream.write(struct.pack('<L', size))
         self.socket_stream.flush()
+        # send data
         self.socket_stream.write(data)
         self.socket_stream.flush()
 
@@ -185,129 +181,53 @@ class ClientSocketHandler():
         return command
 
     def send_image_classes(self, filter_classes):
-        # creating header
+        # send header
         header = "CLASSES"
-        header_bytes = header.encode('utf-8')
+        self._send_non_image_data(header)
 
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # convert classes list into a bytestream
-        log.debug(filter_classes)
-        classes_bytes = pickle.dumps(filter_classes)
-
-        # send size of image classes list
-        self.socket_stream.write(struct.pack('<L', len(classes_bytes)))
-        self.socket_stream.flush()
         # send image classes list
-        self.socket_stream.write(classes_bytes)
-        self.socket_stream.flush()
+        self._send_non_image_data(filter_classes)
 
         log.info('Classes sent to Scrubdash')
 
     def send_hostname(self):
-        # creating header
+        # send header
         header = "HOSTNAME"
-        header_bytes = header.encode('utf-8')
+        self._send_non_image_data(header)
 
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # get hostname
+        # send hostname
         hostname = socket.gethostname()
-        hostname_bytes = hostname.encode('utf-8')
-
-        # send size of image classes list
-        self.socket_stream.write(struct.pack('<L', len(hostname_bytes)))
-        self.socket_stream.flush()
-        # send image classes list
-        self.socket_stream.write(hostname_bytes)
-        self.socket_stream.flush()
+        self._send_non_image_data(hostname)
 
     def send_continue_run(self, continue_run):
-        # creating header
+        # send header
         header = "CONTINUE_RUN"
-        header_bytes = header.encode('utf-8')
+        self._send_non_image_data(header)
 
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # convert continue run flag into a str so it can be encoded
-        continue_run = "True" if continue_run else "False" 
-        # convert the str representation into a bytestream
-        continue_bytes = continue_run.encode('utf-8')
-
-        # send size of image classes list
-        self.socket_stream.write(struct.pack('<L', len(continue_bytes)))
-        self.socket_stream.flush()
-        # send image classes list
-        self.socket_stream.write(continue_bytes)
-        self.socket_stream.flush()        
+        # send continue run flag
+        self._send_non_image_data(continue_run)  
 
     def send_host_configs(self, filter_classes, continue_run):
-        # creating header to alert asyncio server of config messages
+        # send header to alert asyncio server of config messages
         header = "CONFIG"
-        header_bytes = header.encode('utf-8')
-
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
+        self._send_non_image_data(header)
 
         # sending rest of configuration settings
         self.send_hostname()
         self.send_continue_run(continue_run)
         self.send_image_classes(filter_classes)
 
-        # creating header to alert asyncio server of finished configuration
+        # send header to alert asyncio server of finished configuration
         header = "DONE"
-        header_bytes = header.encode('utf-8')
-
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
+        self._send_non_image_data(header)
 
     def _send_heartbeat(self, timestamp):
-        # creating header
+        # send header
         header = "CONNECTION"
-        header_bytes = header.encode('utf-8')
+        self._send_non_image_data(header)
 
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # convert float timestamp into an int and then conver to a str
-        # so it can be encoded
-        timestamp = str(int(timestamp))
-        # convert the str representation into a bytestream
-        timestamp_bytes = timestamp.encode('utf-8')
-
-        # send size of image classes list
-        self.socket_stream.write(struct.pack('<L', len(timestamp_bytes)))
-        self.socket_stream.flush()
-        # send image classes list
-        self.socket_stream.write(timestamp_bytes)
-        self.socket_stream.flush()    
+        # send timestamp
+        self._send_non_image_data(timestamp)
 
     def send_heartbeat_every_15s(self):
         now = time.time()
