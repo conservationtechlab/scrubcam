@@ -2,12 +2,12 @@ HEADLESS: False
 
 # REMOTE SERVER CONFIGURATION
 SEND_IMAGES: True
-REMOTE_SERVER_IP: 192.168.1.66
-REMOTE_SERVER_PORT: 65432
+REMOTE_SERVER_IP: 132.249.242.104
+REMOTE_SERVER_PORT: 8888
 
 # RECORDING CONFIGURATION
-RECORD_FOLDER: /home/user/recordings
-RECORD: False
+RECORD_FOLDER: /home/pi/recordings
+RECORD: True
 # num seconds after program starts to begin video recording
 PAUSE_BEFORE_RECORD: 5
 
@@ -21,11 +21,10 @@ PREVIEW_ON: true
 # SCREEN CONFIGURATIONS
 DISPLAY_RESOLUTION: [640, 480]
 
-
 # AI CONFIGURATIONS
 # bird, person, giraffe, cup, cat, dog, horse, sheep, cow, elephant, bear, zebra
 # TRACKED_CLASS: [giraffe, person]
-FILTER_CLASSES: [bird, person]
+FILTER_CLASSES: [bird, person, bottle, horse, elephant]
 
 CONF_THRESHOLD: .1
 RECORD_CONF_THRESHOLD: .6

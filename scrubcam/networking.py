@@ -1,5 +1,6 @@
 import logging
 import io
+import time
 import socket
 import struct
 import pickle
@@ -112,6 +113,7 @@ class ServerSocketHandler(Thread):
 class ClientSocketHandler():
 
     def __init__(self, configs):
+        self.CONFIG_FILE = configs
         REMOTE_SERVER_IP = configs['REMOTE_SERVER_IP']
         PORT = configs['REMOTE_SERVER_PORT']
 
@@ -123,6 +125,7 @@ class ClientSocketHandler():
         self.sock = socket.socket()
         self.sock.connect((REMOTE_SERVER_IP, PORT))
         self.socket_stream = self.sock.makefile('rwb')
+        self.LAST_ALERT_TIME = None
 
     def send_no_image(self):
         self.socket_stream.write(struct.pack('<L', 0))
@@ -142,18 +145,11 @@ class ClientSocketHandler():
     #     self._send_image_data(image_stream)
 
     def send_image_and_boxes(self, image_stream, boxes):
-        # creating header
+        # send header
         header = "IMAGE"
-        header_bytes = header.encode()
-
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        self._send_object(boxes)
+        self._send_non_image_data(header)
+        # send lboxes and image
+        self._send_non_image_data(boxes)
         self._send_image_data(image_stream)
 
     def _send_image_data(self, image_stream):
@@ -166,11 +162,14 @@ class ClientSocketHandler():
         self.socket_stream.write(image_stream.read())
         self.socket_stream.flush()
 
-    def _send_object(self, a_object):
+    def _send_non_image_data(self, a_object):
         data = pickle.dumps(a_object)
         size = len(data)
+
+        # send data size
         self.socket_stream.write(struct.pack('<L', size))
         self.socket_stream.flush()
+        # send data
         self.socket_stream.write(data)
         self.socket_stream.flush()
 
@@ -182,29 +181,74 @@ class ClientSocketHandler():
         return command
 
     def send_image_classes(self, filter_classes):
-        # creating header
+        # send header
         header = "CLASSES"
-        header_bytes = header.encode()
+        self._send_non_image_data(header)
 
-        # send header size
-        self.socket_stream.write(struct.pack('<L', len(header_bytes)))
-        self.socket_stream.flush()
-        # send header bytes
-        self.socket_stream.write(header_bytes)
-        self.socket_stream.flush()
-
-        # convert classes list into a bytestream
-        log.debug(filter_classes)
-        classes_bytes = pickle.dumps(filter_classes)
-
-        # send size of image classes list
-        self.socket_stream.write(struct.pack('<L', len(classes_bytes)))
-        self.socket_stream.flush()
         # send image classes list
-        self.socket_stream.write(classes_bytes)
-        self.socket_stream.flush()
+        self._send_non_image_data(filter_classes)
 
         log.info('Classes sent to Scrubdash')
+
+    def send_hostname(self):
+        # send header
+        header = "HOSTNAME"
+        self._send_non_image_data(header)
+
+        # send hostname
+        hostname = socket.gethostname()
+        self._send_non_image_data(hostname)
+
+    def send_continue_run(self, continue_run):
+        # send header
+        header = "CONTINUE_RUN"
+        self._send_non_image_data(header)
+
+        # send continue run flag
+        self._send_non_image_data(continue_run)  
+
+    def send_host_configs(self, filter_classes, continue_run):
+        # send header to alert asyncio server of config messages
+        header = "CONFIG"
+        self._send_non_image_data(header)
+
+        # sending rest of configuration settings
+        self.send_hostname()
+        self.send_continue_run(continue_run)
+        self.send_image_classes(filter_classes)
+
+        # send header to alert asyncio server of finished configuration
+        header = "DONE"
+        self._send_non_image_data(header)
+
+    def _send_heartbeat(self, timestamp):
+        # send header
+        header = "CONNECTION"
+        self._send_non_image_data(header)
+
+        # send timestamp
+        self._send_non_image_data(timestamp)
+
+    def send_heartbeat_every_15s(self):
+        now = time.time()
+
+        # check if cooldown time has elapsed since most recent alert
+        if self.LAST_ALERT_TIME is None:
+            # This is the first heartbeat being sent
+            cooldown_elapsed = True
+        else:
+            # get current time and check if cooldown time has elapsed
+            time_diff = now - self.LAST_ALERT_TIME
+
+            if time_diff >= 15:
+                cooldown_elapsed = True
+            else:
+                cooldown_elapsed = False
+
+        # send heartbeat if cooldown time has elapsed
+        if cooldown_elapsed:
+            self._send_heartbeat(now)
+            self.LAST_ALERT_TIME = now
 
     def close(self):
         log.info('Cleaning up SocketHandler')
