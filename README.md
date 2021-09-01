@@ -73,6 +73,19 @@ variants--a charger controller with external solar panels.
      sudo apt-get install edgetpu-examples
      sudo chmod a+w /usr/share/edgetpu/examples
 
+
+**Note: For this line, be sure that you replace [virtualenv_name] with the name of
+your virtual environment.**
+
+     cd ~/.virtualenvs/[virtualenv_name]/lib/python3.7/site-packages/
+
+Also note that `.virtualenvs` is the default location that `mkvirtualenv` saves virtual
+environments, but this may not be the case if using `venv` or `virtualenv` to create the
+virtual environment. Replace `.virtualenvs` with the folder that your virtual environment
+is saved to. This may be a regular folder in some instances.
+
+
+
 # Usage
 
 ## On Raspberry Pi 
@@ -86,14 +99,21 @@ You can copy this example file and modify it to your specific purposes
 and thus then run ScrubCam on a properly set up system (see Setup
 section above for how to set up system) via:
 
-     ./scrubcam.py cfgs/YOUR_CONFIG_FILE.yaml
+```
+Usage:
+    ./scrubcam.py [OPTIONS] cfgs/YOUR_CONFIG_FILE.yaml
+    
+Options:
+    -h, --help          Output a usage message and exit
+    -c, --continue      Continue saving images to the most recent session on ScrubDash
+```
 
 ## On server system 
 
-For monitoring the activity of a ScrubCam there is also a small
-server/dashboard program called `scrubhub.py` intended to be run on a
+For monitoring the activity of a ScrubCam there is also a Plotly-Dash-based
+server/dashboard program called `scrubdash.py` intended to be run on a
 machine on the same network (e.g. back in the lab or on a laptop in
-the field). This will soon be deprecated as it is being replaced by a
-Plotly-Dash-based server/dashboard.
+the field). [Scrubdash](https://github.com/kaytsui/scrubdash) is used
+to organize, visualize, and analyze images that are sent by ScrubCams.
 
 
