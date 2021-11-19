@@ -14,38 +14,46 @@ readers). This hardware is typically integrated into a larger assembly
 that includes a weatherproof enclosure and batteries and--in some
 variants--a charger controller with external solar panels.
 
+# Operating System
+
+Currently system runs on Raspian Stretch and Buster.  Problems have
+been encountered with Bullseye.
+
 # Setup
 
-### Install virtualenvwrapper
+### Install virtualenv virtualenvwrapper
 
-     pip3 install virtualenvwrapper
+     sudo pip3 install virtualenv virtualenvwrapper
 
-### Create a .virtualenvs folder to hold all virtual environments
+### Set up virtualenv and virtualenvwrapper 
 
-     mkdir ~/.virtualenvs
+    echo -e "\n# Virtualenv and virtualenvwrapper stuff" >> ~/.bashrc
+    echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc
+    echo "export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3" >> ~/.bashrc
+    echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
+    source ~/.bashrc
 
-### Add python path and source to ~/.bashrc file
+### Create virtual environment for scrubcam project
 
-     export WORKON_HOME=$HOME/.virtualenvs
-     export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-     export VIRTUALENVWRAPPER_VIRTUALENV=/home/pi/.local/bin/virtualenv
-     source ~/.local/bin/virtualenvwrapper.sh
+     mkvirtualenv scrubcam_env
 
-### Create virutal environment
+Note that DenCam requires Python 3 so if the default on your system is
+Python 2 (it is on Stretch and Buster), make sure the virtual
+environment will use Python 3:
 
-     mkvirtualenv scrubcam
+      mkvirtualenv scrubcam_env -p python3
 
-### Activate virtual environment
+### Activate virtual environment (not necessary if you just made it)
 
-     workon scrubcam
+     workon scrubcam_env
 
 ### Clone the scrubcam repo
 
      git clone https://github.com/icr-ctl/scrubcam.git
 
-### Get apt-get updates
+### Update apt package sources list
 
-     sudo apt-get update
+     sudo apt update
 
 ### Install scrubcam dependencies
 
