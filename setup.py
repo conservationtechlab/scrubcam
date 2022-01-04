@@ -29,16 +29,18 @@ setuptools.setup(
     packages=['scrubcam'],
     install_requires=[
         'pyyaml',
-        'picamera',
         'netifaces',
-        'rpi.gpio',
         'numpy',
         'opencv-python',
         'imutils',
         'pillow',
-        'dencam',
         'camml',
     ],
+    extras_require={
+        'pi': ['dencam',
+               'picamera',
+               'rpi.gpio']
+        },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
