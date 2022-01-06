@@ -21,11 +21,13 @@ been encountered with Bullseye.
 
 # Setup
 
-### Install virtualenv virtualenvwrapper
+### Clone the ScrubCam repo
 
-     sudo pip3 install virtualenv virtualenvwrapper
+    git clone https://github.com/icr-ctl/scrubcam.git
 
-### Set up virtualenv and virtualenvwrapper 
+### Install and set up virtualenv and virtualenvwrapper 
+
+    sudo pip3 install virtualenv virtualenvwrapper
 
     echo -e "\n# Virtualenv and virtualenvwrapper stuff" >> ~/.bashrc
     echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc
@@ -35,64 +37,81 @@ been encountered with Bullseye.
 
 ### Create virtual environment for scrubcam project
 
-     mkvirtualenv scrubcam_env
+Create a virtual environment named "scrubcam_env":
 
-Note that DenCam requires Python 3 so if the default on your system is
+    mkvirtualenv scrubcam_env
+
+Note that ScrubCam requires Python 3 so if the default on your system is
 Python 2 (it is on Stretch and Buster), make sure the virtual
-environment will use Python 3:
+environment will use Python 3 by using this command instead:
 
-      mkvirtualenv scrubcam_env -p python3
+    mkvirtualenv scrubcam_env -p python3
 
-### Activate virtual environment (not necessary if you just made it)
+Activate virtual environment (not necessary if you just made it):
 
-     workon scrubcam_env
+    workon scrubcam_env
 
-### Clone the scrubcam repo
+### Install ScrubCam dependencies
 
-     git clone https://github.com/icr-ctl/scrubcam.git
+#### Update apt package sources list
 
-### Update apt package sources list
+    sudo apt update
 
-     sudo apt update
+#### Run installation script
 
-### Install scrubcam dependencies
+Navigate to inside of the local copy of the scrubcam code repository and run the install script:     
 
-     cd ~/scrubcam
-     ./install.sh
+    cd scrubcam
+    ./install.sh
 
-### Set up edgetpu dependencies
-     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-     echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
-     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-     sudo apt-get update
-     sudo apt-get install libedgetpu1-std
-     sudo apt-get install python3-edgetpu
+#### PyCoral Packages Dependency
 
-     # Reboot the pi
-     sudo reboot now
-     # Then create symlink into our virtualenv
-     dpkg -L python3-edgetpu
+Scrubcam uses the Google Coral USB Accelerator and the associated
+packages to interface with this hardware cannot be installed with pip
+and there installation is not currently included in the install
+script.
 
-     # Find a line like "/usr/lib/python3/dist-packages/edgetpu"
-     # We will symlink this into our virtualenv
-     cd ~/.virtualenvs/[virtualenv_name]/lib/python3.7/site-packages/
-     ln -s /usr/lib/python3/dist-packages/edgetpu/ edgetpu
-     # Then install the examples
-     sudo apt-get install edgetpu-examples
-     sudo chmod a+w /usr/share/edgetpu/examples
+To set up the Coral, follow the directions at the project's website:
 
+https://coral.ai/docs/accelerator/get-started/
 
-**Note: For this line, be sure that you replace [virtualenv_name] with the name of
-your virtual environment.**
+Then to be able to access these packages from within your virtual
+environment you must create symlinks within the virtual environment
+files to where they are located.
 
-     cd ~/.virtualenvs/[virtualenv_name]/lib/python3.7/site-packages/
+Locate the packages:
+    
+    dpkg -L python3-pycoral
+    dpkg -L python3-tflite-runtime
 
-Also note that `.virtualenvs` is the default location that `mkvirtualenv` saves virtual
-environments, but this may not be the case if using `venv` or `virtualenv` to create the
-virtual environment. Replace `.virtualenvs` with the folder that your virtual environment
-is saved to. This may be a regular folder in some instances.
+For each of those two packages, find a line similar to
+"/usr/lib/python3/dist-packages/pycoral"
 
+Go into the folder of the virtual environment you created (we used
+scrubcam_env above) and create a symlink for each of those packages
+depending on where they are actually located on your system.  For
+example:
 
+    cd ~/.virtualenvs/scrubcam_env/lib/python3.7/site-packages/
+    ln -s /usr/lib/python3/dist-packages/pycoral
+    ln -s /usr/lib/python3/dist-packages/tflite-runtime
+
+Note that `.virtualenvs` is where we set up for virtual environments
+to go (e.g. those created using `mkvirtualenv`) but this may not be
+the case if using `venv` or `virtualenv` to create the virtual
+environment. Replace `.virtualenvs` with the folder that your virtual
+environment is saved to. This may be a regular folder in some
+instances.
+    
+### Get models for testing everything is working
+
+TODO: needs to explain how to locate and if necessary run asset download
+script(s) for the test models included with pycoral
+
+We used to get these here:
+
+    sudo apt install edgetpu-examples
+    sudo chmod a+w /usr/share/edgetpu/examples
 
 # Usage
 
@@ -116,12 +135,13 @@ Options:
     -c, --continue      Continue saving images to the most recent session on ScrubDash
 ```
 
-## On server system 
+## On remote server: ScrubDash
 
-For monitoring the activity of a ScrubCam there is also a Plotly-Dash-based
-server/dashboard program called `scrubdash.py` intended to be run on a
-machine on the same network (e.g. back in the lab or on a laptop in
-the field). [Scrubdash](https://github.com/kaytsui/scrubdash) is used
-to organize, visualize, and analyze images that are sent by ScrubCams.
+For monitoring the activity of a ScrubCam there is also a
+Plotly-Dash-based server/dashboard program called `scrubdash.py`
+intended to be run on a machine on the same network (e.g. back in the
+lab or on a laptop in the
+field). [Scrubdash](https://github.com/icr-ctl/scrubdash) is used to
+organize, visualize, and analyze images that are sent by ScrubCams.
 
 
