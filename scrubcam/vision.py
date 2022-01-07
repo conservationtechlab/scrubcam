@@ -74,6 +74,7 @@ class ImageClassificationSystem(InferenceSystem):
                                   configs['MODEL_CONFIG_FILE'])
         CLASSES_FILE = os.path.join(self.MODEL_PATH,
                                     configs['CLASS_NAMES_FILE'])
+
         self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
         # prepare neural network
         self.network = nn.ImageClassifierHandler(self.MODEL)
@@ -119,7 +120,10 @@ class ObjectDetectionSystem(InferenceSystem):
                                     configs['OBJ_MODEL_CONFIG_FILE'])
         OBJ_CLASSES_FILE = os.path.join(self.MODEL_PATH,
                                         configs['OBJ_CLASS_NAMES_FILE'])
-        self.OBJ_CLASSES = nn.read_classes_from_file(OBJ_CLASSES_FILE)
+
+        self.OBJ_CLASSES = []
+        for row in open(OBJ_CLASSES_FILE):
+            self.OBJ_CLASSES.append(row.strip())
 
         self.NMS_THRESHOLD = configs['NMS_THRESHOLD']
         # prepare neural network
