@@ -1,3 +1,4 @@
+build/
 *.avi
 *.egg-info
 *.jpeg
