@@ -1,6 +1,6 @@
 # Overview
 
-Control code and utilities for the ScrubCam, an edge-AI-enabled field
+Control code and utilities for ScrubCam, an edge-AI-enabled field
 wildlife camera system.
 
 # Hardware
@@ -51,7 +51,7 @@ Activate virtual environment (not necessary if you just made it):
 
     workon scrubcam_env
 
-### Install ScrubCam dependencies
+### Install most ScrubCam dependencies
 
 #### Update apt package sources list
 
@@ -59,23 +59,35 @@ Activate virtual environment (not necessary if you just made it):
 
 #### Run installation script
 
-Navigate to inside of the local copy of the scrubcam code repository and run the install script:     
+Navigate to inside of the local copy of the scrubcam code repository
+and run the install script:
 
     cd scrubcam
-    ./install.sh
+    ./install_on_pi.sh
 
-#### PyCoral Packages Dependency
+Note: this install script is intended for installing on a Pi.  If you
+are installing on your regular computer to access some of the ScrubCam
+tools that are useful there, we should probably make an install script
+for you. In the meantime the main thing you want to do is:
+
+    pip install .
+
+### PyCoral Dependencies
 
 Scrubcam uses the Google Coral USB Accelerator and the associated
 packages to interface with this hardware cannot be installed with pip
-and there installation is not currently included in the install
+and their installation is not currently included in the install
 script.
+
+#### Install PyCoral Package 
 
 To set up the Coral, follow the directions at the project's website:
 
 https://coral.ai/docs/accelerator/get-started/
 
-Then to be able to access these packages from within your virtual
+#### Link PyCoral packages into virtual environment
+
+To be able to access the PyCoral packages from within your virtual
 environment you must create symlinks within the virtual environment
 files to where they are located.
 
@@ -88,13 +100,13 @@ For each of those two packages, find a line similar to
 "/usr/lib/python3/dist-packages/pycoral"
 
 Go into the folder of the virtual environment you created (we used
-scrubcam_env above) and create a symlink for each of those packages
+`scrubcam_env` above) and create a symlink for each of those packages
 depending on where they are actually located on your system.  For
 example:
 
     cd ~/.virtualenvs/scrubcam_env/lib/python3.7/site-packages/
     ln -s /usr/lib/python3/dist-packages/pycoral
-    ln -s /usr/lib/python3/dist-packages/tflite-runtime
+    ln -s /usr/lib/python3/dist-packages/tflite_runtime
 
 Note that `.virtualenvs` is where we set up for virtual environments
 to go (e.g. those created using `mkvirtualenv`) but this may not be
@@ -105,13 +117,19 @@ instances.
     
 ### Get models for testing everything is working
 
-TODO: needs to explain how to locate and if necessary run asset download
-script(s) for the test models included with pycoral
+Install package that includes some models that we can use to test
+things: 
 
-We used to get these here:
+    sudo apt install pycoral-examples
 
-    sudo apt install edgetpu-examples
-    sudo chmod a+w /usr/share/edgetpu/examples
+Now there should be a bunch of models in
+`/usr/share/pycoral/examples/models`.  One of these is actually used
+by the example config file in `cfgs` folder.
+
+Note: If you did the full set of steps from the PyCoral website above
+you would have installed one MobileNet image classifier model. There
+are similar workflows/scripts within that repo to get some of the same
+models that are in `pycoral-examples`.
 
 # Usage
 
