@@ -48,7 +48,7 @@ CAMERA_ROTATION = configs['CAMERA_ROTATION']
 FILTER_CLASSES = configs['FILTER_CLASSES']
 
 HEADLESS = configs['HEADLESS']
-SEND_IMAGES = configs['SEND_IMAGES']
+CONNECT_REMOTE_SERVER = configs['CONNECT_REMOTE_SERVER']
 
 
 def main():
@@ -61,7 +61,7 @@ def main():
     camera.rotation = CAMERA_ROTATION
     camera.resolution = CAMERA_RESOLUTION
 
-    if SEND_IMAGES:
+    if CONNECT_REMOTE_SERVER:
         log.info('Connecting to server enabled')
         socket_handler = ClientSocketHandler(configs)
         socket_handler.send_host_configs(FILTER_CLASSES, CONTINUE_RUN)
@@ -74,7 +74,7 @@ def main():
 
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
-            if SEND_IMAGES:
+            if CONNECT_REMOTE_SERVER:
                 socket_handler.send_heartbeat_every_15s()
             detector.infer(stream)
             detector.print_report()
@@ -87,7 +87,7 @@ def main():
                 if RECORD and lboxes[0]['confidence'] > RECORD_CONF_THRESHOLD:
                     detected_classes = [lbox['class_name'] for lbox in lboxes]
                     if any(itm in FILTER_CLASSES for itm in detected_classes):
-                        if SEND_IMAGES:
+                        if CONNECT_REMOTE_SERVER:
                             socket_handler.send_image_and_boxes(stream, lboxes)
                             log.debug('Image sent')
                         detector.save_current_frame(None, lboxes=lboxes)
@@ -104,7 +104,7 @@ def main():
             stream.truncate()
     except KeyboardInterrupt:
         log.warning('KeyboardInterrupt')
-        if SEND_IMAGES:
+        if CONNECT_REMOTE_SERVER:
             socket_handler.close()
 
 
