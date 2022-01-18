@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Code for ScrubCam field device
+"""Code for ScrubCam field camera device
 
-The code that runs on the Scrubcam field device.  Gets configuration
-information from a YAML file provided as a command line argument.
-There is an example configuration file at:
+The code that runs on the Scrubcam field camera device.  Gets
+configuration information from a YAML file provided as a command line
+argument.  There is an example configuration file at:
 
 cfgs/config.yaml.example
 
@@ -25,6 +25,7 @@ from dencam.gui import State
 from scrubcam.vision import ObjectDetectionSystem
 from scrubcam.networking import ClientSocketHandler
 from scrubcam.display import Display
+from scrubcam.lora import LoRaSender
 
 logging.basicConfig(level='INFO',
                     format='[%(levelname)s] %(message)s (%(name)s)')
@@ -51,6 +52,8 @@ SEND_IMAGES = configs['SEND_IMAGES']
 
 
 def main():
+    lora_sender = LoRaSender()
+
     detector = ObjectDetectionSystem(configs)
     stream = io.BytesIO()
 
@@ -63,7 +66,7 @@ def main():
         socket_handler = ClientSocketHandler(configs)
         socket_handler.send_host_configs(FILTER_CLASSES, CONTINUE_RUN)
     else:
-        log.info('Connecting to server ***DISABLED***\n\n')
+        log.info('Connecting to ScrubDash server is ***DISABLED***\n\n')
 
     if not HEADLESS:
         state = State(4)
@@ -71,7 +74,8 @@ def main():
 
     try:
         for _ in camera.capture_continuous(stream, format='jpeg'):
-            socket_handler.send_heartbeat_every_15s()            
+            if SEND_IMAGES:
+                socket_handler.send_heartbeat_every_15s()
             detector.infer(stream)
             detector.print_report()
 
@@ -85,8 +89,9 @@ def main():
                     if any(itm in FILTER_CLASSES for itm in detected_classes):
                         if SEND_IMAGES:
                             socket_handler.send_image_and_boxes(stream, lboxes)
+                            log.debug('Image sent')
                         detector.save_current_frame(None, lboxes=lboxes)
-                        log.debug('Image sent')
+                        lora_sender.send(f"Top-1: {lboxes[0]['class_name']}")
 
                     with open('what_was_seen.log', 'a+') as f:
                         time_format = '%Y-%m-%d %H:%M:%S'
