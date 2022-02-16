@@ -49,10 +49,14 @@ FILTER_CLASSES = configs['FILTER_CLASSES']
 
 HEADLESS = configs['HEADLESS']
 CONNECT_REMOTE_SERVER = configs['CONNECT_REMOTE_SERVER']
+LORA_ON = configs['LORA_ON']
 
 
 def main():
-    lora_sender = LoRaSender()
+    if LORA_ON:
+        lora_sender = LoRaSender()
+    else:
+        log.info('LoRa is ***DISABLED***\n\n')
 
     detector = ObjectDetectionSystem(configs)
     stream = io.BytesIO()
@@ -91,7 +95,8 @@ def main():
                             socket_handler.send_image_and_boxes(stream, lboxes)
                             log.debug('Image sent')
                         detector.save_current_frame(None, lboxes=lboxes)
-                        lora_sender.send(f"Top-1: {lboxes[0]['class_name']}")
+                        if LORA_ON:
+                            lora_sender.send(f"Top-1: {lboxes[0]['class_name']}")
 
                     with open('what_was_seen.log', 'a+') as f:
                         time_format = '%Y-%m-%d %H:%M:%S'
