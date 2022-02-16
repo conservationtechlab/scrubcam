@@ -35,14 +35,15 @@ setuptools.setup(
         'imutils',
         'pillow',
         'camml',
-        'adafruit-circuitpython-ssd1306',
-        'adafruit-circuitpython-rfm9x',
     ],
     extras_require={
         'pi': ['dencam',
                'picamera',
-               'rpi.gpio']
-        },
+               'rpi.gpio',
+               'adafruit-circuitpython-ssd1306',
+               'adafruit-circuitpython-rfm9x',
+        ]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
