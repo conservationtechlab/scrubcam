@@ -96,7 +96,8 @@ def main():
                             log.debug('Image sent')
                         detector.save_current_frame(None, lboxes=lboxes)
                         if LORA_ON:
-                            lora_sender.send(f"Top-1: {lboxes[0]['class_name']}")
+                            to_send = f"Top-1: {lboxes[0]['class_name']}"
+                            lora_sender.send(to_send)
 
                     with open('what_was_seen.log', 'a+') as f:
                         time_format = '%Y-%m-%d %H:%M:%S'
