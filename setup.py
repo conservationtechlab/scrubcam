@@ -35,6 +35,8 @@ setuptools.setup(
         'imutils',
         'pillow',
         'camml',
+        'adafruit-circuitpython-ssd1306',
+        'adafruit-circuitpython-rfm9x',
     ],
     extras_require={
         'pi': ['dencam',
