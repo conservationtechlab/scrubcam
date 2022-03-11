@@ -65,12 +65,12 @@ and run the install script:
     cd scrubcam
     ./install_on_pi.sh
 
-Note: this install script is intended for installing on a Pi.  If you
+Note: this install script is intended for installing on a Pi. If you
 are installing on your regular computer to access some of the ScrubCam
 tools that are useful there, we should probably make an install script
 for you. In the meantime the main thing you want to do is:
 
-    python setup.py install
+    pip install .
 
 This will install the required dependencies, which do not include Pi
 specific dependencies.
