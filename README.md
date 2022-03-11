@@ -65,6 +65,9 @@ and run the install script:
     cd scrubcam
     ./install_on_pi.sh
 
+Additionally, the install script will enable the camera, if not
+already enabled.
+
 Note: this install script is intended for installing on a Pi.  If you
 are installing on your regular computer to access some of the ScrubCam
 tools that are useful there, we should probably make an install script
