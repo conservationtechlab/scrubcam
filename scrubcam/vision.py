@@ -21,6 +21,7 @@ class InferenceSystem():
         self.RECORD_FOLDER = configs['RECORD_FOLDER']
         self.recorded_image_count = 0
         self.frame = None
+        self._ensure_record_folder()
 
     def infer_on_frame(self, frame):
         raise NotImplementedError
@@ -64,6 +65,12 @@ class InferenceSystem():
         if lboxes is not None:
             log.debug('Writing csv files of boxes.')
             self._write_boxes_file(timestamp, lboxes)
+
+    def _ensure_record_folder(self):
+        folder_exists = os.path.exists(self.RECORD_FOLDER)
+
+        if not folder_exists:
+            os.mkdir(self.RECORD_FOLDER)
 
 
 class ImageClassificationSystem(InferenceSystem):
