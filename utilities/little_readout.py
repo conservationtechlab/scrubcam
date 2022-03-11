@@ -1,4 +1,14 @@
-"""Readout for PiOLED screen when used
+"""Readout for PiOLED screen
+
+For when a ScrubCam configuration does have this PiOLED screen
+integrated.
+
+Displays:
+- hostname
+- top two IP addresses
+- line that (tightly) shows CPU usage (a decimal is displayed, not
+   entirely sure what this specifically represents , RAM usage as a
+   percentage, disk usage as a percentage.
 
 Derived from:
 
@@ -42,9 +52,6 @@ draw.rectangle((0, 0, width, height), outline=0, fill=0)
 padding = -2
 top = padding
 bottom = height - padding
-# Move left to right keeping track of the current x position for
-# drawing shapes.
-x = 0
 
 # Load default font.
 font = ImageFont.load_default()
@@ -62,24 +69,30 @@ while True:
 
     # Shell scripts for system monitoring from here:
     # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
+    cmd = "hostname"
+    hostname = subprocess.check_output(cmd, shell=True).decode("utf-8")
     cmd = "hostname -I | cut -d' ' -f1"
-    IP1 = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    ip1 = subprocess.check_output(cmd, shell=True).decode("utf-8")
     cmd = "hostname -I | cut -d' ' -f2"
-    IP2 = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = "top -bn1 | grep load | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'"
-    CPU = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = "free -m | awk 'NR==2{printf \"Mem: %s/%s MB  %.2f%%\", $3,$2,$3*100/$2 }'"
-    MemUsage = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%d GB  %s", $3,$2,$5}\''
-    Disk = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    ip2 = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    # cmd = "top -bn1 | grep load | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'"
+    cmd = "top -bn1 | grep load | awk '{printf \"C:%.2f\", $(NF-2)}'"
+    cpu = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    # cmd = "free -m | awk 'NR==2{printf \"Mem: %s/%s MB  %.2f%%\", $3,$2,$3*100/$2 }'"
+    cmd = "free -m | awk 'NR==2{printf \"M:%.1f%%\", $3*100/$2 }'"
+    memory_usage = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    # cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%d GB  %s", $3,$2,$5}\''
+    cmd = 'df -h | awk \'$NF=="/"{printf "D:%s", $5}\''
+    disk_usage = subprocess.check_output(cmd, shell=True).decode("utf-8")
 
     # Write four lines of text.
 
-    draw.text((x, top + 0), "IP1: " + IP1, font=font, fill=255)
-    draw.text((x, top + 8), "IP2: " + IP2, font=font, fill=255)
-    # draw.text((x, top + 8), CPU, font=font, fill=255)
-    draw.text((x, top + 16), MemUsage, font=font, fill=255)
-    draw.text((x, top + 25), Disk, font=font, fill=255)
+    draw.text((0, top + 0), "Name: " + hostname, font=font, fill=255)
+    draw.text((0, top + 8), "IP1: " + ip1, font=font, fill=255)
+    draw.text((0, top + 16), "IP2: " + ip2, font=font, fill=255)
+    draw.text((0, top + 25), cpu, font=font, fill=255)
+    draw.text((40, top + 25), memory_usage, font=font, fill=255)
+    draw.text((80, top + 25), disk_usage, font=font, fill=255)
 
     # Display image.
     disp.image(image)
