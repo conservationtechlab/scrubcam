@@ -31,7 +31,7 @@ setuptools.setup(
         'pyyaml',
         'netifaces',
         'numpy',
-        'opencv-python',
+        'opencv-python==4.5.4.60',
         'imutils',
         'pillow',
         'camml',
