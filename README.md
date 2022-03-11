@@ -51,7 +51,7 @@ Activate virtual environment (not necessary if you just made it):
 
     workon scrubcam_env
 
-### Install most ScrubCam dependencies
+### Install ScrubCam dependencies
 
 #### Update apt package sources list
 
@@ -65,12 +65,15 @@ and run the install script:
     cd scrubcam
     ./install_on_pi.sh
 
-Note: this install script is intended for installing on a Pi.  If you
+Note: this install script is intended for installing on a Pi. If you
 are installing on your regular computer to access some of the ScrubCam
 tools that are useful there, we should probably make an install script
 for you. In the meantime the main thing you want to do is:
 
     pip install .
+
+This will install the required dependencies, which do not include Pi
+specific dependencies.
 
 ### PyCoral Dependencies
 
