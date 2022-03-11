@@ -41,8 +41,7 @@ setuptools.setup(
                'picamera',
                'rpi.gpio',
                'adafruit-circuitpython-ssd1306',
-               'adafruit-circuitpython-rfm9x',
-        ]
+               'adafruit-circuitpython-rfm9x']
     },
     classifiers=[
         "Programming Language :: Python :: 3",
