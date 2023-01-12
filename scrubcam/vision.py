@@ -79,10 +79,10 @@ class ImageClassificationSystem(InferenceSystem):
         super().__init__(configs)
         self.MODEL = os.path.join(self.MODEL_PATH,
                                   configs['MODEL_CONFIG_FILE'])
-        CLASSES_FILE = os.path.join(self.MODEL_PATH,
+        classes_file = os.path.join(self.MODEL_PATH,
                                     configs['CLASS_NAMES_FILE'])
 
-        self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
+        self.CLASSES = nn.read_classes_from_file(classes_file)
         # prepare neural network
         self.network = nn.ImageClassifierHandler(self.MODEL)
 
@@ -121,23 +121,23 @@ class ObjectDetectionSystem(InferenceSystem):
         super().__init__(configs)
         # CV constants
         # TRACKED_CLASS = configs['TRACKED_CLASS']
-        INPUT_WIDTH = configs['INPUT_WIDTH']
-        INPUT_HEIGHT = configs['INPUT_HEIGHT']
-        MODEL_CONFIG = os.path.join(self.MODEL_PATH,
+        input_width = configs['INPUT_WIDTH']
+        input_height = configs['INPUT_HEIGHT']
+        model_config = os.path.join(self.MODEL_PATH,
                                     configs['OBJ_MODEL_CONFIG_FILE'])
-        OBJ_CLASSES_FILE = os.path.join(self.MODEL_PATH,
+        obj_classes_file = os.path.join(self.MODEL_PATH,
                                         configs['OBJ_CLASS_NAMES_FILE'])
 
         self.OBJ_CLASSES = []
-        for row in open(OBJ_CLASSES_FILE):
+        for row in open(obj_classes_file):
             self.OBJ_CLASSES.append(row.strip())
 
         self.NMS_THRESHOLD = configs['NMS_THRESHOLD']
         # prepare neural network
-        self.network = nn.ObjectDetectorHandler(MODEL_CONFIG,
+        self.network = nn.ObjectDetectorHandler(model_config,
                                                 self.MODEL_WEIGHTS,
-                                                INPUT_WIDTH,
-                                                INPUT_HEIGHT)
+                                                input_width,
+                                                input_height)
 
     def infer_on_frame(self, frame):
         outs, inference_time = self.network.infer(frame)
