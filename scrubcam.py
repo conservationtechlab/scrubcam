@@ -15,9 +15,9 @@ To run:
 import logging
 import io
 import argparse
-import yaml
-
 from datetime import datetime
+
+import yaml
 import picamera
 
 from dencam.gui import State
@@ -38,7 +38,7 @@ args = parser.parse_args()
 CONFIG_FILE = args.config_filename
 CONTINUE_RUN = args.cont
 
-with open(CONFIG_FILE) as f:
+with open(CONFIG_FILE, encoding="utf-8") as f:
     configs = yaml.load(f, Loader=yaml.SafeLoader)
 
 RECORD = configs['RECORD']
@@ -53,6 +53,9 @@ LORA_ON = configs['LORA_ON']
 
 
 def main():
+    """Main routine of Scrubcam
+
+    """
     if LORA_ON:
         lora_sender = LoRaSender()
     else:
@@ -99,12 +102,11 @@ def main():
                             to_send = f"Top-1: {lboxes[0]['class_name']}"
                             lora_sender.send(to_send)
 
-                    with open('what_was_seen.log', 'a+') as f:
+                    with open('what_was_seen.log', 'a+', encoding="utf-8") as seen_file:
                         time_format = '%Y-%m-%d %H:%M:%S'
                         tstamp = str(datetime.now().strftime(time_format))
                         top_class = lboxes[0]['class_name']
-                        f.write('{} | {}\n'.format(tstamp,
-                                                   top_class))
+                        seen_file.write(f'{tstamp} | {top_class}\n')
 
             stream.seek(0)
             stream.truncate()
