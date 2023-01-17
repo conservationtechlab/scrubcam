@@ -1,3 +1,12 @@
+"""Tools for using with LoRa packet radio hardware
+
+On some ScrubCam devices LoRa packet radio hardware is equipped to
+send reports back to hubs.  Code for interfacing with those is
+included here.
+
+"""
+
+
 import busio
 from digitalio import DigitalInOut
 import board
@@ -14,10 +23,10 @@ class LoRaSender():
     """
 
     def __init__(self):
-        CS = DigitalInOut(board.CE1)
-        RESET = DigitalInOut(board.D25)
+        cs = DigitalInOut(board.CE1)  # pylint: disable=invalid-name
+        reset = DigitalInOut(board.D25)
         spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-        self.rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, 915.0)
+        self.rfm9x = adafruit_rfm9x.RFM9x(spi, cs, reset, 915.0)
         self.rfm9x.tx_power = 23
 
     def send(self, data_strg):
