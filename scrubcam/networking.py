@@ -1,3 +1,12 @@
+"""Tools for TCP/IP networking
+
+In certain deployments, ScrubCams are connected to a TCP/IP network
+for communications.  This module contains the pieces associated with
+that. In particular, if a ScrubCam is associated with a ScrubHub it is
+on the same TCP/IP network with it.
+
+"""
+
 import logging
 import io
 import time
@@ -13,9 +22,11 @@ log = logging.getLogger(__name__)
 
 
 def create_image_dict():
-    """Creates the image dictionary that we are using as the way a
-    ServerSocketHandler (and perhaps other things) share what they
-    receive from the socket with other parts of the program.
+    """Creates the image dictionary 
+
+    We are using thsi as the way a ServerSocketHandler (and perhaps other
+    things) share what they receive from the socket with other parts
+    of the program.
 
     """
     return {'img': None, 'lboxes': None}
@@ -82,6 +93,9 @@ class ServerSocketHandler(Thread):
         self.sock.close()
 
     def _read_box(self, stream):
+        """Read the labeled bounding box info
+
+        """
         data = stream.read(struct.calcsize('<L'))
         if not data:
             return False
@@ -97,6 +111,10 @@ class ServerSocketHandler(Thread):
         return True
 
     def _read_image_data(self, stream):
+        """Extract the actual image from the data stream
+
+        """
+        
         data = stream.read(struct.calcsize('<L'))
         if not data:
             return False
@@ -128,10 +146,16 @@ class ClientSocketHandler():
         self.LAST_ALERT_TIME = None
 
     def send_no_image(self):
+        """Send a message with no image
+
+        """
         self.socket_stream.write(struct.pack('<L', 0))
         self.socket_stream.flush()
 
     def send_image(self, image_stream):
+        """Send an image across the socket
+
+        """
         self.socket_stream.write(struct.pack('<L', 1))
         self.socket_stream.flush()
 
