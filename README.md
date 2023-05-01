@@ -12,12 +12,16 @@ with 4 GPIO-connected buttons) attached. Typically several storage
 devices are connected via the USB ports on the Pi (e.g. uSD card
 readers). This hardware is typically integrated into a larger assembly
 that includes a weatherproof enclosure and batteries and--in some
-variants--a charger controller with external solar panels.
+variants--a charge controller with external solar panels.
 
 # Operating System
 
-Currently system runs on Raspian Stretch and Buster.  Problems have
-been encountered with Bullseye.
+Currently, the system runs and has been tested on Raspian Stretch and
+Buster.  Problems have been encountered with Bullseye that are
+believed to be mostly (if not entirely) linked to picamera no longer
+being supported and replaced by picamera2. At some point the ScrubCam
+developers will decide whether to switch the system over to picamera2
+or provide instructions here for re-enabling the legacy camera stack.
 
 # Setup
 
