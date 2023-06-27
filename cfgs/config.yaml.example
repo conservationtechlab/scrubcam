@@ -1,44 +1,45 @@
-LORA_ON: False
-HEADLESS: False
-
-# REMOTE SERVER CONFIGURATION
-CONNECT_REMOTE_SERVER: True
-REMOTE_SERVER_IP: scrubdash-ip
-REMOTE_SERVER_PORT: 8888
-
-# RECORDING CONFIGURATION
-RECORD_FOLDER: /home/pi/recordings
-RECORD: True
-# num seconds after program starts to begin video recording
-PAUSE_BEFORE_RECORD: 5
-
 # CAMERA CONFIGURATIONS
 CAMERA_RESOLUTION: [1920, 1080]
 VIDEO_QUALITY: 20  # between 1 and 40, 1 is highest, 40 lowest
 FRAME_RATE: 25
 CAMERA_ROTATION: 180
-PREVIEW_ON: true
+PREVIEW_ON: False
 
-# SCREEN CONFIGURATIONS
-DISPLAY_RESOLUTION: [640, 480]
+# RECORDING CONFIGURATION
+RECORD: False
+RECORD_FOLDER: PATH_WHERE_YOU_WANT_TO_STORE_RECORDINGS
+# num seconds after program starts to begin video recording
+PAUSE_BEFORE_RECORD: 5
 
-# AI CONFIGURATIONS
-# bird, person, giraffe, cup, cat, dog, horse, sheep, cow, elephant, bear, zebra
-# TRACKED_CLASS: [giraffe, person]
-FILTER_CLASSES: [bird, person, bottle, horse, elephant]
-
+# OBJECT DETECTOR CONFIGURATION
+FILTER_CLASSES: [giraffe, elephant, bear, zebra]
 CONF_THRESHOLD: .1
 RECORD_CONF_THRESHOLD: .6
 NMS_THRESHOLD: .9
 INPUT_WIDTH: 416
 INPUT_HEIGHT: 416
 
+# next block presumes `pycoral-examples` debian package is installed
 MODEL_PATH: /usr/share/pycoral/examples/models/
 OBJ_MODEL_CONFIG_FILE: ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite
 OBJ_CLASS_NAMES_FILE: coco_labels.txt
 MODEL_CONFIG_FILE: mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite
 CLASS_NAMES_FILE: inat_bird_labels.txt
+# alternative model that is also in pycoral examples:
 # MODEL_CONFIG_FILE: mobilenet_v2_1.0_224_quant_edgetpu.tflite
 # CLASS_NAMES_FILE: imagenet_labels.txt
+
+# REMOTE SERVER CONFIGURATION
+CONNECT_REMOTE_SERVER: False
+REMOTE_SERVER_IP: IP_SCRUBDASH_SERVER
+REMOTE_SERVER_PORT: SCRUBDASH_PORT_ON_SCRUBDASH_SERVER
+
+# SCREEN CONFIGURATIONS
+HEADLESS: True
+DISPLAY_RESOLUTION: [640, 480]
+
+# LORA CONFIGURATION
+LORA_ON: False
+
 
 
