@@ -89,11 +89,14 @@ packages to interface with this hardware cannot be installed with pip
 and their installation is not currently included in the install
 script.
 
-#### Install PyCoral Package 
+#### Install PyCoral Packages using included script
 
-To set up the Coral, follow the directions at the project's website:
+Run the following script to install apt packages needed for the
+PyCoral to work.  The script will prompt for a reboot; this is only
+necessary if you don't have physical access to the system to
+unplug/replug the Coral USB Accelerator.
 
-https://coral.ai/docs/accelerator/get-started/
+    ./install_pycoral.sh
 
 #### Link PyCoral packages into virtual environment
 
