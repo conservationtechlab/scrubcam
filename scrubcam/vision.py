@@ -1,3 +1,6 @@
+"""Tools for handling ML inference on image data 
+
+"""
 import csv
 import logging
 import re
@@ -13,6 +16,12 @@ log = logging.getLogger(__name__)
 
 
 class InferenceSystem():
+    """Base class for inference systems
+
+    Note: is an abstract base class
+
+    """
+    
     def __init__(self, configs):
         # CV constants
         self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
@@ -24,9 +33,16 @@ class InferenceSystem():
         self._ensure_record_folder()
 
     def infer_on_frame(self, frame):
+        """Run inference on a single frame
+
+        """
         raise NotImplementedError
 
     def infer(self, stream):
+        """Run inference on stream
+
+        Is built around the stream that comes in from a picamera
+        """
         # may not be necessary since using .getvalue()
         stream.seek(0)
         # Construct a numpy array from the stream
@@ -36,6 +52,11 @@ class InferenceSystem():
         self.infer_on_frame(self.frame)
 
     def _write_boxes_file(self, timestamp, lboxes):
+        """Write a list of lboxes to a CSV
+
+        The CSV is given timestamp as its name
+
+        """
         filename = '{}.csv'.format(timestamp)
         full_filename = os.path.join(self.RECORD_FOLDER, filename)
         with open(full_filename, 'w') as f:
@@ -49,6 +70,9 @@ class InferenceSystem():
                                           *lbox['box']])
 
     def save_current_frame(self, label, lboxes=None):
+        """Save current frame to disk as JPG image
+
+        """
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
         if label is None:
@@ -67,6 +91,9 @@ class InferenceSystem():
             self._write_boxes_file(timestamp, lboxes)
 
     def _ensure_record_folder(self):
+        """Ensure recording folder in configurations exists
+
+        """
         folder_exists = os.path.exists(self.RECORD_FOLDER)
 
         if not folder_exists:
@@ -74,7 +101,10 @@ class InferenceSystem():
 
 
 class ImageClassificationSystem(InferenceSystem):
+    """Inference system that handles image classification
 
+    """
+    
     def __init__(self, configs):
         super().__init__(configs)
         self.MODEL = os.path.join(self.MODEL_PATH,
@@ -96,6 +126,9 @@ class ImageClassificationSystem(InferenceSystem):
         return label, score
 
     def print_report(self):
+        """Log the Top-1 label and score
+
+        """
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
             strg = '***{}*** is classification (Top 1) with score: {}'
