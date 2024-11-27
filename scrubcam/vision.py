@@ -57,9 +57,9 @@ class InferenceSystem():
         The CSV is given timestamp as its name
 
         """
-        filename = '{}.csv'.format(timestamp)
+        filename = f"{timestamp}.csv"
         full_filename = os.path.join(self.record_folder, filename)
-        with open(full_filename, 'w') as f:
+        with open(full_filename, 'w', encoding="utf8") as f:
             self.csv_writer = csv.writer(f,
                                          delimiter=',',
                                          quotechar='"',
@@ -77,11 +77,11 @@ class InferenceSystem():
         timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
         if label is None:
             label = lboxes[0]['class_name']
-        filename = '{}_{}.jpeg'.format(timestamp, label)
+        filename = f"{timestamp}_{label}.jpeg"
         self.recorded_image_count += 1
         full_filename = os.path.join(self.record_folder, filename)
         log.info('Saving image.')
-        log.debug('Image filename is {}'.format(full_filename))
+        log.debug("Image filename is %s", full_filename)
         ok = cv2.imwrite(full_filename, self.frame)
         if not ok:
             log.warning('Did not succeed in image saving.')
@@ -117,7 +117,7 @@ class ImageClassificationSystem(InferenceSystem):
         self.network = nn.ImageClassifierHandler(self.model)
 
     def infer_on_frame(self, frame):
-        self.result, inference_time = self.network.infer(frame)
+        self.result, _ = self.network.infer(frame)
 
     def _extract_label_and_score(self):
         label = self.classes[self.result[0][0]]
@@ -131,9 +131,8 @@ class ImageClassificationSystem(InferenceSystem):
         """
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
-            strg = '***{}*** is classification (Top 1) with score: {}'
-            log.info(strg.format(label,
-                                 score))
+            strg = "***%s*** is classification (Top 1) with score: %.2f"
+            log.info(strg, label, score)
         else:
             log.info('Inference resulted in no class label.')
 
@@ -173,7 +172,7 @@ class ObjectDetectionSystem(InferenceSystem):
                                                 input_height)
 
     def infer_on_frame(self, frame):
-        outs, inference_time = self.network.infer(frame)
+        outs, _ = self.network.infer(frame)
         self.labeled_boxes = self.network.filter_boxes(outs,
                                                        frame,
                                                        self.conf_threshold,
