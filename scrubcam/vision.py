@@ -60,14 +60,14 @@ class InferenceSystem():
         filename = f"{timestamp}.csv"
         full_filename = os.path.join(self.record_folder, filename)
         with open(full_filename, 'w', encoding="utf8") as f:
-            self.csv_writer = csv.writer(f,
-                                         delimiter=',',
-                                         quotechar='"',
-                                         quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(f,
+                                    delimiter=',',
+                                    quotechar='"',
+                                    quoting=csv.QUOTE_MINIMAL)
             for lbox in lboxes:
-                self.csv_writer.writerow([lbox['class_name'],
-                                          lbox['confidence'],
-                                          *lbox['box']])
+                csv_writer.writerow([lbox['class_name'],
+                                     lbox['confidence'],
+                                     *lbox['box']])
 
     def save_current_frame(self, label, lboxes=None):
         """Save current frame to disk as JPG image
@@ -116,6 +116,8 @@ class ImageClassificationSystem(InferenceSystem):
         # prepare neural network
         self.network = nn.ImageClassifierHandler(self.model)
 
+        self.result = None
+
     def infer_on_frame(self, frame):
         self.result, _ = self.network.infer(frame)
 
@@ -161,8 +163,10 @@ class ObjectDetectionSystem(InferenceSystem):
                                         configs['OBJ_CLASS_NAMES_FILE'])
 
         self.obj_classes = []
-        for row in open(obj_classes_file):
-            self.obj_classes.append(row.strip())
+        self.labeled_boxes = None
+        with open(obj_classes_file, 'r', encoding="utf8") as f:
+            for row in f:
+                self.obj_classes.append(row.strip())
 
         self.nms_threshold = configs['NMS_THRESHOLD']
         # prepare neural network
@@ -198,12 +202,13 @@ class ObjectDetectionSystem(InferenceSystem):
             log.debug('No boxes detected')
 
     def top_class(self):
+        top_class = None
         if self.labeled_boxes:
-            return self.class_of_box(self.labeled_boxes[0])
+            top_class =  self.class_of_box(self.labeled_boxes[0])
+        return top_class
 
     def top_box(self):
+        top_box = None
         if self.labeled_boxes:
-            return self.labeled_boxes[0]['box']
-
-    # def coords_of_top_box(self):
-    #     return self.labeled_boxes[0][
+            top_box = self.labeled_boxes[0]['box']
+        return top_box
