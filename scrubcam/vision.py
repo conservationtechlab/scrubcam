@@ -1,3 +1,6 @@
+"""Tools for handling ML inference on image data 
+
+"""
 import csv
 import logging
 import re
@@ -13,20 +16,33 @@ log = logging.getLogger(__name__)
 
 
 class InferenceSystem():
+    """Base class for inference systems
+
+    Note: is an abstract base class
+
+    """
+
     def __init__(self, configs):
         # CV constants
-        self.CONF_THRESHOLD = configs['CONF_THRESHOLD']
-        self.MODEL_PATH = configs['MODEL_PATH']
-        self.MODEL_WEIGHTS = 'N/A'  # not applicable
-        self.RECORD_FOLDER = configs['RECORD_FOLDER']
+        self.conf_threshold = configs['CONF_THRESHOLD']
+        self.model_path = configs['MODEL_PATH']
+        self.model_weights = 'N/A'  # not applicable
+        self.record_folder = configs['RECORD_FOLDER']
         self.recorded_image_count = 0
         self.frame = None
         self._ensure_record_folder()
 
     def infer_on_frame(self, frame):
+        """Run inference on a single frame
+
+        """
         raise NotImplementedError
 
     def infer(self, stream):
+        """Run inference on stream
+
+        Is built around the stream that comes in from a picamera
+        """
         # may not be necessary since using .getvalue()
         stream.seek(0)
         # Construct a numpy array from the stream
@@ -36,28 +52,36 @@ class InferenceSystem():
         self.infer_on_frame(self.frame)
 
     def _write_boxes_file(self, timestamp, lboxes):
-        filename = '{}.csv'.format(timestamp)
-        full_filename = os.path.join(self.RECORD_FOLDER, filename)
-        with open(full_filename, 'w') as f:
-            self.csv_writer = csv.writer(f,
-                                         delimiter=',',
-                                         quotechar='"',
-                                         quoting=csv.QUOTE_MINIMAL)
+        """Write a list of lboxes to a CSV
+
+        The CSV is given timestamp as its name
+
+        """
+        filename = f"{timestamp}.csv"
+        full_filename = os.path.join(self.record_folder, filename)
+        with open(full_filename, 'w', encoding="utf8") as f:
+            csv_writer = csv.writer(f,
+                                    delimiter=',',
+                                    quotechar='"',
+                                    quoting=csv.QUOTE_MINIMAL)
             for lbox in lboxes:
-                self.csv_writer.writerow([lbox['class_name'],
-                                          lbox['confidence'],
-                                          *lbox['box']])
+                csv_writer.writerow([lbox['class_name'],
+                                     lbox['confidence'],
+                                     *lbox['box']])
 
     def save_current_frame(self, label, lboxes=None):
+        """Save current frame to disk as JPG image
+
+        """
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%dT%Hh%Mm%Ss.%f")[:-3]
         if label is None:
             label = lboxes[0]['class_name']
-        filename = '{}_{}.jpeg'.format(timestamp, label)
+        filename = f"{timestamp}_{label}.jpeg"
         self.recorded_image_count += 1
-        full_filename = os.path.join(self.RECORD_FOLDER, filename)
+        full_filename = os.path.join(self.record_folder, filename)
         log.info('Saving image.')
-        log.debug('Image filename is {}'.format(full_filename))
+        log.debug("Image filename is %s", full_filename)
         ok = cv2.imwrite(full_filename, self.frame)
         if not ok:
             log.warning('Did not succeed in image saving.')
@@ -67,48 +91,61 @@ class InferenceSystem():
             self._write_boxes_file(timestamp, lboxes)
 
     def _ensure_record_folder(self):
-        folder_exists = os.path.exists(self.RECORD_FOLDER)
+        """Ensure recording folder in configurations exists
+
+        """
+        folder_exists = os.path.exists(self.record_folder)
 
         if not folder_exists:
-            os.mkdir(self.RECORD_FOLDER)
+            os.mkdir(self.record_folder)
 
 
 class ImageClassificationSystem(InferenceSystem):
+    """Inference system that handles image classification
+
+    """
 
     def __init__(self, configs):
         super().__init__(configs)
-        self.MODEL = os.path.join(self.MODEL_PATH,
+        self.model = os.path.join(self.model_path,
                                   configs['MODEL_CONFIG_FILE'])
-        CLASSES_FILE = os.path.join(self.MODEL_PATH,
+        classes_file = os.path.join(self.model_path,
                                     configs['CLASS_NAMES_FILE'])
 
-        self.CLASSES = nn.read_classes_from_file(CLASSES_FILE)
+        self.classes = nn.read_classes_from_file(classes_file)
         # prepare neural network
-        self.network = nn.ImageClassifierHandler(self.MODEL)
+        self.network = nn.ImageClassifierHandler(self.model)
+
+        self.result = None
 
     def infer_on_frame(self, frame):
-        self.result, inference_time = self.network.infer(frame)
+        self.result, _ = self.network.infer(frame)
 
     def _extract_label_and_score(self):
-        label = self.CLASSES[self.result[0][0]]
+        label = self.classes[self.result[0][0]]
         score = self.result[0][1]
 
         return label, score
 
     def print_report(self):
+        """Log the Top-1 label and score
+
+        """
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
-            strg = '***{}*** is classification (Top 1) with score: {}'
-            log.info(strg.format(label,
-                                 score))
+            strg = "***%s*** is classification (Top 1) with score: %.2f"
+            log.info(strg, label, score)
         else:
             log.info('Inference resulted in no class label.')
 
     def save_image_of_anything_but(self, excluded_class):
+        """Save current frame to disk unless its label is excluded class
+
+        """
         # also thresholds on score threshold defined in config file
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
-            if label != excluded_class and score >= self.CONF_THRESHOLD:
+            if label != excluded_class and score >= self.conf_threshold:
                 label = re.sub('[()]', '', label)
                 label = '_'.join(label.split(' '))
                 log.debug(label)
@@ -116,42 +153,53 @@ class ImageClassificationSystem(InferenceSystem):
 
 
 class ObjectDetectionSystem(InferenceSystem):
+    """Handles object detection
+
+    """
 
     def __init__(self, configs):
         super().__init__(configs)
         # CV constants
         # TRACKED_CLASS = configs['TRACKED_CLASS']
-        INPUT_WIDTH = configs['INPUT_WIDTH']
-        INPUT_HEIGHT = configs['INPUT_HEIGHT']
-        MODEL_CONFIG = os.path.join(self.MODEL_PATH,
+        input_width = configs['INPUT_WIDTH']
+        input_height = configs['INPUT_HEIGHT']
+        model_config = os.path.join(self.model_path,
                                     configs['OBJ_MODEL_CONFIG_FILE'])
-        OBJ_CLASSES_FILE = os.path.join(self.MODEL_PATH,
+        obj_classes_file = os.path.join(self.model_path,
                                         configs['OBJ_CLASS_NAMES_FILE'])
 
-        self.OBJ_CLASSES = []
-        for row in open(OBJ_CLASSES_FILE):
-            self.OBJ_CLASSES.append(row.strip())
+        self.obj_classes = []
+        self.labeled_boxes = None
+        with open(obj_classes_file, 'r', encoding="utf8") as f:
+            for row in f:
+                self.obj_classes.append(row.strip())
 
-        self.NMS_THRESHOLD = configs['NMS_THRESHOLD']
+        self.nms_threshold = configs['NMS_THRESHOLD']
         # prepare neural network
-        self.network = nn.ObjectDetectorHandler(MODEL_CONFIG,
-                                                self.MODEL_WEIGHTS,
-                                                INPUT_WIDTH,
-                                                INPUT_HEIGHT)
+        self.network = nn.ObjectDetectorHandler(model_config,
+                                                self.model_weights,
+                                                input_width,
+                                                input_height)
 
     def infer_on_frame(self, frame):
-        outs, inference_time = self.network.infer(frame)
+        outs, _ = self.network.infer(frame)
         self.labeled_boxes = self.network.filter_boxes(outs,
                                                        frame,
-                                                       self.CONF_THRESHOLD,
-                                                       self.NMS_THRESHOLD)
+                                                       self.conf_threshold,
+                                                       self.nms_threshold)
         for lbox in self.labeled_boxes:
             lbox['class_name'] = self.class_of_box(lbox)
 
     def class_of_box(self, lbox):
-        return self.OBJ_CLASSES[lbox['class_id']]
+        """Return class of current lbox
+
+        """
+        return self.obj_classes[lbox['class_id']]
 
     def print_report(self, max_boxes=None):
+        """Log information about detected boxes
+
+        """
         if self.labeled_boxes:
             if max_boxes is None:
                 max_boxes = len(self.labeled_boxes)
@@ -166,12 +214,19 @@ class ObjectDetectionSystem(InferenceSystem):
             log.debug('No boxes detected')
 
     def top_class(self):
+        """Return top class
+
+        """
+        top_class = None
         if self.labeled_boxes:
-            return self.class_of_box(self.labeled_boxes[0])
+            top_class =  self.class_of_box(self.labeled_boxes[0])
+        return top_class
 
     def top_box(self):
-        if self.labeled_boxes:
-            return self.labeled_boxes[0]['box']
+        """Return top box
 
-    # def coords_of_top_box(self):
-    #     return self.labeled_boxes[0][
+        """
+        top_box = None
+        if self.labeled_boxes:
+            top_box = self.labeled_boxes[0]['box']
+        return top_box

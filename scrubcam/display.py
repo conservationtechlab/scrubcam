@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class Display():
     """Handles drawing labelled boxes to output frame
-    
+
     May need to be renamed as true display mechanics are inherited
     from DenCam and this class only really focuses on the box-drawing.
     Moreover, this is currently not used properly in scrubcam.py but
@@ -42,6 +42,9 @@ class Display():
         self.overlay.layer = 3
 
     def update(self, lboxes):
+        """Update the screen with latest data
+
+        """
         self.camera.remove_overlay(self.overlay)
 
         overlay_img = Image.new('RGBA', self.resolution, (0, 0, 0, 0))
@@ -57,8 +60,9 @@ class Display():
                                width=10)
                 font = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
                 the_font = ImageFont.truetype(font, 50)
-                text = '{}:{:.1f}'.format(lbox['class_name'],
-                                          100 * lbox['confidence'])
+                as_percentage = 100 * lbox['confidence']
+                text = f"{lbox['class_name']}:{as_percentage:.1f}"
+
                 draw.text((left + 10, top + 10),
                           text,
                           font=the_font,
@@ -77,6 +81,12 @@ class Display():
 
 
 class OverlayHandler():
+    """Manages the picamera overlay
+
+    Bounding boxes and other visuals are draw onto the image using the
+    overlay functionality built into picamera
+
+    """
     def __init__(self, camera, resolution):
         self.camera = camera
         self.resolution = resolution
@@ -84,6 +94,9 @@ class OverlayHandler():
         self.apply_overlay()
 
     def draw_box(self, lbox):
+        """Draws a labeled bounding box onto the overlay
+
+        """
         draw = ImageDraw.Draw(self.image)
         left, top, width, height = lbox['box']
         draw.rectangle([(left, top), (left + width, top + height)],
@@ -91,20 +104,29 @@ class OverlayHandler():
                        width=10)
         font_path = '/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf'
         the_font = ImageFont.truetype(font_path, 50)
-        text = '{}:{:.1f}'.format(lbox['class_name'],
-                                  100 * lbox['confidence'])
+        as_percentage = 100 * lbox['confidence']
+        text = f"{lbox['class_name']}:{as_percentage:.1f}"
         draw.text((left + 10, top + 10),
                   text,
                   font=the_font,
                   fill=(255, 0, 0))
 
     def clean_image(self):
+        """Set the display image to black image
+
+        """
         self.image = Image.new('RGBA', self.resolution, (0, 0, 0, 0))
 
     def remove_previous(self):
+        """Remove previous overlay
+
+        """
         self.camera.remove_overlay(self.overlay)
 
     def apply_overlay(self):
+        """Place overlay on image
+
+        """
         pad = Image.new('RGBA',
                         (((self.image.size[0] + 31) // 32) * 32,
                          ((self.image.size[1] + 15) // 16) * 16,))
