@@ -139,6 +139,9 @@ class ImageClassificationSystem(InferenceSystem):
             log.info('Inference resulted in no class label.')
 
     def save_image_of_anything_but(self, excluded_class):
+        """Save current frame to disk unless its label is excluded class
+
+        """
         # also thresholds on score threshold defined in config file
         if len(self.result) > 0:
             label, score = self._extract_label_and_score()
@@ -150,6 +153,9 @@ class ImageClassificationSystem(InferenceSystem):
 
 
 class ObjectDetectionSystem(InferenceSystem):
+    """Handles object detection
+
+    """
 
     def __init__(self, configs):
         super().__init__(configs)
@@ -185,9 +191,15 @@ class ObjectDetectionSystem(InferenceSystem):
             lbox['class_name'] = self.class_of_box(lbox)
 
     def class_of_box(self, lbox):
+        """Return class of current lbox
+
+        """
         return self.obj_classes[lbox['class_id']]
 
     def print_report(self, max_boxes=None):
+        """Log information about detected boxes
+
+        """
         if self.labeled_boxes:
             if max_boxes is None:
                 max_boxes = len(self.labeled_boxes)
@@ -202,12 +214,18 @@ class ObjectDetectionSystem(InferenceSystem):
             log.debug('No boxes detected')
 
     def top_class(self):
+        """Return top class
+
+        """
         top_class = None
         if self.labeled_boxes:
             top_class =  self.class_of_box(self.labeled_boxes[0])
         return top_class
 
     def top_box(self):
+        """Return top box
+
+        """
         top_box = None
         if self.labeled_boxes:
             top_box = self.labeled_boxes[0]['box']
